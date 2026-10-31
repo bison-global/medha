@@ -18,8 +18,21 @@ jobs:
       - name: Install SQLite for repository tests
         run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
       - run: flutter pub get
-      - run: flutter analyze --no-fatal-infos
-      - run: flutter test
+      - name: Analyze
+        id: analyze
+        continue-on-error: true
+        run: |
+          # Report each problem as an annotation so it shows on the PR.
+          dart analyze --format=machine > analyze.txt 2>&1 || true
+          awk -F'|' 'NF>=8 && $1!="INFO" { lvl = ($1=="ERROR") ? "error" : "warning"; sub(/^.*\/medha\//, "", $4); printf "::%s file=%s,line=%s,col=%s::%s (%s)\n", lvl, $4, $5, $6, $8, $3 }' analyze.txt
+          flutter analyze --no-fatal-infos
+      - name: Test
+        id: test
+        continue-on-error: true
+        run: flutter test --reporter github
+      - name: Fail if analyze or tests failed
+        if: steps.analyze.outcome == 'failure' || steps.test.outcome == 'failure'
+        run: exit 1
 
   native:
     name: Build llama.cpp bridge (Linux compile check)
