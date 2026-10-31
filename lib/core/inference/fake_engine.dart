@@ -22,7 +22,7 @@ class FakeInferenceEngine implements InferenceEngine {
   @override
   Future<void> load(ModelHandle model) async => _loaded = model.id;
 
-  @override
+  /// The `assistantPrefix` of each [generate] call.
   final List<String> prefixes = [];
 
   @override

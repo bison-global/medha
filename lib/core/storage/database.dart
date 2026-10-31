@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:sqlcipher_flutter_libs/sqlcipher_flutter_libs.dart';
-import 'package:sqlite3/open.dart';
+import 'package:sqlite3/open.dart' as sqlite_open;
 import 'package:sqlite3/sqlite3.dart';
 
 /// The app's single encrypted SQLite database (ARCHITECTURE.md §7, §9.2).
@@ -21,7 +21,8 @@ class AppDatabase {
       throw ArgumentError('keyHex must be 64 lowercase hex characters');
     }
     if (Platform.isAndroid) {
-      open.overrideFor(OperatingSystem.android, openCipherOnAndroid);
+      // The static open() below shadows the library's `open`, hence the prefix.
+      sqlite_open.open.overrideFor(sqlite_open.OperatingSystem.android, openCipherOnAndroid);
     }
     final db = sqlite3.open(path);
     try {

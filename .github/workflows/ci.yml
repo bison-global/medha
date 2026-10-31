@@ -29,7 +29,16 @@ jobs:
       - name: Test
         id: test
         continue-on-error: true
-        run: flutter test --reporter github
+        run: |
+          flutter test --machine > test.jsonl || status=$?
+          # One annotation per failing test, with its error message.
+          jq -rR 'fromjson? | select(.type=="testStart") | [.test.id, .test.name] | @tsv' test.jsonl > names.tsv
+          jq -rR 'fromjson? | select(.type=="error") | [.testID, (.error | gsub("\n"; " ") | .[0:400])] | @tsv' test.jsonl |
+            while IFS=$'\t' read -r id err; do
+              name=$(awk -F'\t' -v id="$id" '$1==id {print $2}' names.tsv)
+              echo "::error title=Test failed::${name}: ${err}"
+            done
+          exit ${status:-0}
       - name: Fail if analyze or tests failed
         if: steps.analyze.outcome == 'failure' || steps.test.outcome == 'failure'
         run: exit 1
