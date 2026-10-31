@@ -1,0 +1,25 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec_overrides.yaml
+coverage/
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Native builds
+packages/medha_llama/ios/Frameworks/
+packages/medha_llama/android/.cxx/
+**/.cxx/
+
+# Secrets and private test data — never commit these
+*.seed
+catalog_signing*
+redteam/
+*.redteam.jsonl
