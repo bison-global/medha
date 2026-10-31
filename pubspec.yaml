@@ -1,0 +1,41 @@
+name: medha
+description: >-
+  Offline, on-device AI chat. Download a small open model for a subject and
+  chat with it privately — nothing leaves the phone.
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.8.0
+  flutter: ">=3.32.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  background_downloader: ">=8.9.0 <10.0.0"
+  crypto: ^3.0.6
+  cryptography: ^2.7.0
+  ffi: ^2.1.3
+  flutter_riverpod: ">=2.6.1 <3.0.0"
+  flutter_secure_storage: ">=9.2.4 <10.0.0"
+  go_router: ">=14.8.0 <17.0.0"
+  http: ^1.2.2
+  medha_llama:
+    path: packages/medha_llama
+  path: ^1.9.0
+  path_provider: ^2.1.5
+  sqlcipher_flutter_libs: ^0.6.7
+  sqlite3: ^2.7.5
+  url_launcher: ^6.3.1
+
+dev_dependencies:
+  flutter_lints: ">=5.0.0 <7.0.0"
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/catalog/

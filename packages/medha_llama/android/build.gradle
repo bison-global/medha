@@ -1,0 +1,54 @@
+// Builds libmedha_llama.so (C shim + llama.cpp) with the NDK through CMake.
+group = "com.bisonglobaltech.medha_llama"
+version = "0.1.0"
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.7.3")
+    }
+}
+
+rootProject.allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+apply plugin: "com.android.library"
+
+android {
+    namespace = "com.bisonglobaltech.medha_llama"
+    compileSdk = 35
+    ndkVersion = android.ndkVersion
+
+    externalNativeBuild {
+        cmake {
+            path = "../src/CMakeLists.txt"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    defaultConfig {
+        minSdk = 28
+        ndk {
+            // Medha targets 64-bit phones only (see ARCHITECTURE.md).
+            abiFilters "arm64-v8a"
+        }
+        externalNativeBuild {
+            cmake {
+                arguments "-DCMAKE_BUILD_TYPE=Release", "-DGGML_OPENMP=OFF"
+                cFlags "-O3"
+                cppFlags "-O3"
+            }
+        }
+    }
+}
