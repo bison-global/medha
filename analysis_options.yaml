@@ -1,0 +1,11 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - native/**
+    - build/**
+
+linter:
+  rules:
+    - always_declare_return_types
+    - cancel_subscriptions
