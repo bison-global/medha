@@ -88,9 +88,9 @@ class DocumentExtractor {
     try {
       final b = StringBuffer();
       for (final page in doc.pages) {
-        final text = await page.loadText();
+        final PdfPageText? text = await page.loadText();
         b
-          ..write(text.fullText)
+          ..write(text?.fullText ?? '')
           ..write('\n\n');
         if (b.length > UploadLimits.maxChars) break;
       }

@@ -6,8 +6,8 @@ publish_to: none
 version: 1.0.0+2
 
 environment:
-  sdk: ^3.8.0
-  flutter: ">=3.32.0"
+  sdk: ^3.9.0
+  flutter: ">=3.35.1"
 
 dependencies:
   flutter:
@@ -28,7 +28,7 @@ dependencies:
     path: packages/medha_llama
   path: ^1.9.0
   path_provider: ^2.1.5
-  pdfrx: ">=1.1.0 <2.0.0"
+  pdfrx: ^2.2.24
   speech_to_text: ">=7.0.0 <8.0.0"
   sqlcipher_flutter_libs: ^0.6.7
   sqlite3: ^2.7.5

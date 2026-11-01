@@ -16,7 +16,7 @@ This repository is the Flutter app. The design is in [docs/ARCHITECTURE.md](docs
 
 ## Getting started
 
-Requires Flutter (stable, 3.32 or newer), and for device builds the Android NDK or Xcode.
+Requires Flutter (stable, 3.35 or newer), and for device builds the Android NDK or Xcode.
 
 ```bash
 git clone --recurse-submodules https://github.com/bison-global/medha
