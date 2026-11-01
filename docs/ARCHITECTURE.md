@@ -4,7 +4,7 @@
 
 **Tech stack:** Flutter (Dart) for UI and app logic · llama.cpp (C/C++) via `dart:ffi` for inference · encrypted SQLite (drift + SQLite3MultipleCiphers) for storage and vector search
 **Targets:** Android 9+ (arm64) and iOS 15+ (arm64)
-**Status:** Draft v0.6 (ten subjects; licences, disclosure and reporting in §9.5). It matches the clickable prototype (lock, chats, projects, uploads, models, settings), adds the open-weight model map (§5.3), the local vector store design (§8.1), content safety (§9.4) and red-team testing (§11.1).
+**Status:** Draft v0.7. The v1.0 app implements M1–M4 (see §12, "Implementation notes"). It matches the clickable prototype (lock, chats, projects, uploads, models, settings, voice), adds the open-weight model map (§5.3), the local vector store design (§8.1), content safety (§9.4) and red-team testing (§11.1).
 
 ---
 
@@ -793,6 +793,16 @@ The attack set is effectively a guide to bypassing Medha's checks, so it is hand
 | **M5 — Polish** | Performance tuning, accessibility, localisation (Hindi, Kannada, Tamil…), store launch. Full red-team suite in every launch language, plus an external tester session before store submission. |
 
 ---
+
+### Implementation notes (v1.0)
+
+Where the v1.0 code differs from this document:
+- **Storage.** `sqlite3` with SQLCipher directly, not drift with SQLite3MultipleCiphers (§7). Schema v2 adds `projects`, `documents`, `doc_chunks` (+ FTS5) and `reports`. Uploaded files are `documents` rows rather than `project_files`; a chat attachment is a document tied to the chat.
+- **Vector search.** int8 vectors in `doc_chunks` with a Dart cosine scan, merged with FTS5 BM25 by Reciprocal Rank Fusion (§8.1). Embeddings use Qwen3-Embedding-0.6B (open decision 4).
+- **Voice.** Uses the phone's own offline speech recognition (`speech_to_text`, on-device mode) and text-to-speech (`flutter_tts`), not a bundled Whisper model.
+- **Translate** is deferred and shown as "Coming soon".
+- **Per-file encryption** of the copied original upload (§9.2) is not done yet; the extracted text and vectors are in the encrypted database.
+- **LoRA add-ons** can be loaded (`medha_set_lora`), but none are trained yet.
 
 ## 13. Open decisions
 

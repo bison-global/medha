@@ -6,54 +6,10 @@ import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../core/catalog/catalog.dart';
 import '../../core/storage/models.dart';
+import 'new_chat.dart';
 
 class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
-
-  Future<void> _newChat(BuildContext context, WidgetRef ref) async {
-    final services = ref.read(servicesProvider);
-    final installed = await ref.read(installedEntriesProvider.future);
-    final entries = services.catalog.interests.where((e) => installed.contains(e.id)).toList();
-    if (!context.mounted) return;
-
-    InterestEntry? entry;
-    if (entries.isEmpty) {
-      context.push('/subjects');
-      return;
-    } else if (entries.length == 1) {
-      entry = entries.single;
-    } else {
-      entry = await showModalBottomSheet<InterestEntry>(
-        context: context,
-        backgroundColor: MedhaColors.surface,
-        builder: (context) => SafeArea(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Padding(padding: EdgeInsets.all(16), child: Text('Chat with', style: TextStyle(fontWeight: FontWeight.w600))),
-            for (final e in entries)
-              ListTile(
-                leading: CircleAvatar(radius: 6, backgroundColor: Color(e.color)),
-                title: Text(e.displayName),
-                onTap: () => Navigator.of(context).pop(e),
-              ),
-            ListTile(
-              leading: const Icon(Icons.add),
-              title: const Text('Add a subject'),
-              onTap: () {
-                Navigator.of(context).pop();
-                context.push('/subjects');
-              },
-            ),
-          ]),
-        ),
-      );
-    }
-    if (entry == null) return;
-    final chat = await services.chatRepository.createChat(entryId: entry.id);
-    if (context.mounted) {
-      await context.push('/chat/${chat.id}');
-      ref.read(chatListProvider).refresh();
-    }
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -66,17 +22,15 @@ class ChatListScreen extends ConsumerWidget {
         title: const Text('Chats', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600)),
         actions: [
           IconButton(
-            tooltip: 'Settings',
-            icon: const Icon(Icons.tune),
-            onPressed: () async {
-              await context.push('/settings');
-              list.refresh();
-            },
+            tooltip: 'Start a voice chat',
+            icon: const Icon(Icons.mic_none),
+            onPressed: () => startNewChat(context, ref, voice: true),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _newChat(context, ref),
+        heroTag: 'new-chat',
+        onPressed: () => startNewChat(context, ref),
         icon: const Icon(Icons.add),
         label: const Text('New chat'),
       ),

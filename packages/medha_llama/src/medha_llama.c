@@ -31,6 +31,8 @@ struct medha_ctx {
     int32_t prompt_tokens;
     llama_token last;
     bool done;
+    struct llama_adapter_lora * lora;
+    bool embedder;
 };
 
 static _Thread_local char g_error[256];
@@ -44,7 +46,7 @@ const char * medha_last_error(void) {
     return g_error;
 }
 
-medha_ctx * medha_load(const char * path, int32_t n_ctx, int32_t n_threads, int32_t n_gpu_layers) {
+static medha_ctx * load_ctx(const char * path, int32_t n_ctx, int32_t n_threads, int32_t n_gpu_layers, bool embedder) {
     g_error[0] = '\0';
     if (path == NULL || n_ctx <= 0) {
         set_error("invalid arguments");
@@ -65,7 +67,12 @@ medha_ctx * medha_load(const char * path, int32_t n_ctx, int32_t n_threads, int3
 
     struct llama_context_params cp = llama_context_default_params();
     cp.n_ctx = (uint32_t) n_ctx;
-    cp.n_batch = 512;
+    // Embedding models must see the whole text in one batch to pool it.
+    cp.n_batch = embedder ? (uint32_t) n_ctx : 512;
+    if (embedder) {
+        cp.n_ubatch = (uint32_t) n_ctx;
+        cp.embeddings = true;
+    }
     cp.n_threads = n_threads > 0 ? n_threads : 4;
     cp.n_threads_batch = cp.n_threads;
     cp.no_perf = true;
@@ -89,12 +96,22 @@ medha_ctx * medha_load(const char * path, int32_t n_ctx, int32_t n_threads, int3
     ctx->n_ctx = n_ctx;
     ctx->n_batch = (int32_t) cp.n_batch;
     ctx->done = true;
+    ctx->embedder = embedder;
     return ctx;
+}
+
+medha_ctx * medha_load(const char * path, int32_t n_ctx, int32_t n_threads, int32_t n_gpu_layers) {
+    return load_ctx(path, n_ctx, n_threads, n_gpu_layers, false);
+}
+
+medha_ctx * medha_load_embedder(const char * path, int32_t n_ctx, int32_t n_threads, int32_t n_gpu_layers) {
+    return load_ctx(path, n_ctx, n_threads, n_gpu_layers, true);
 }
 
 void medha_free(medha_ctx * ctx) {
     if (ctx == NULL) return;
     if (ctx->sampler != NULL) llama_sampler_free(ctx->sampler);
+    if (ctx->lora != NULL) llama_adapter_lora_free(ctx->lora);
     if (ctx->lctx != NULL) llama_free(ctx->lctx);
     if (ctx->model != NULL) llama_model_free(ctx->model);
     free(ctx);
@@ -257,4 +274,87 @@ int32_t medha_next(medha_ctx * ctx, char * buf, int32_t buf_len) {
 
 int32_t medha_prompt_tokens(medha_ctx * ctx) {
     return ctx == NULL ? 0 : ctx->prompt_tokens;
+}
+
+int32_t medha_set_lora(medha_ctx * ctx, const char * path, float scale) {
+    g_error[0] = '\0';
+    if (ctx == NULL) return MEDHA_ERR_ARGS;
+    if (path == NULL) {
+        llama_set_adapters_lora(ctx->lctx, NULL, 0, NULL);
+        if (ctx->lora != NULL) {
+            llama_adapter_lora_free(ctx->lora);
+            ctx->lora = NULL;
+        }
+        return 0;
+    }
+    struct llama_adapter_lora * adapter = llama_adapter_lora_init(ctx->model, path);
+    if (adapter == NULL) {
+        set_error("could not load the subject add-on");
+        return MEDHA_ERR_ARGS;
+    }
+    float s = scale;
+    if (llama_set_adapters_lora(ctx->lctx, &adapter, 1, &s) != 0) {
+        llama_adapter_lora_free(adapter);
+        set_error("could not apply the subject add-on");
+        return MEDHA_ERR_ARGS;
+    }
+    if (ctx->lora != NULL) llama_adapter_lora_free(ctx->lora);
+    ctx->lora = adapter;
+    return 0;
+}
+
+int32_t medha_embedding_size(medha_ctx * ctx) {
+    return ctx == NULL ? 0 : llama_model_n_embd(ctx->model);
+}
+
+int32_t medha_embed(medha_ctx * ctx, const char * text, float * out, int32_t out_len) {
+    g_error[0] = '\0';
+    if (ctx == NULL || text == NULL || out == NULL || !ctx->embedder) {
+        set_error("invalid arguments");
+        return MEDHA_ERR_ARGS;
+    }
+    const int32_t dim = llama_model_n_embd(ctx->model);
+    if (out_len < dim) {
+        set_error("output buffer too small");
+        return MEDHA_ERR_ARGS;
+    }
+
+    llama_memory_clear(llama_get_memory(ctx->lctx), true);
+
+    const int32_t text_len = (int32_t) strlen(text);
+    int32_t n = -llama_tokenize(ctx->vocab, text, text_len, NULL, 0, true, true);
+    if (n <= 0) {
+        set_error("tokenizer failed");
+        return MEDHA_ERR_TOKENIZE;
+    }
+    llama_token * tokens = (llama_token *) malloc(sizeof(llama_token) * (size_t) n);
+    if (tokens == NULL) {
+        set_error("out of memory");
+        return MEDHA_ERR_ARGS;
+    }
+    n = llama_tokenize(ctx->vocab, text, text_len, tokens, n, true, true);
+    if (n < 0) {
+        free(tokens);
+        set_error("tokenizer failed");
+        return MEDHA_ERR_TOKENIZE;
+    }
+    if (n > ctx->n_ctx) n = ctx->n_ctx;  // truncate long chunks
+
+    const struct llama_batch batch = llama_batch_get_one(tokens, n);
+    const int32_t rc = llama_model_has_encoder(ctx->model) ? llama_encode(ctx->lctx, batch) : llama_decode(ctx->lctx, batch);
+    if (rc != 0) {
+        free(tokens);
+        set_error("embedding failed");
+        return MEDHA_ERR_DECODE;
+    }
+
+    const float * emb = llama_get_embeddings_seq(ctx->lctx, 0);
+    if (emb == NULL) emb = llama_get_embeddings_ith(ctx->lctx, -1);
+    free(tokens);
+    if (emb == NULL) {
+        set_error("model returned no embedding");
+        return MEDHA_ERR_DECODE;
+    }
+    memcpy(out, emb, sizeof(float) * (size_t) dim);
+    return dim;
 }

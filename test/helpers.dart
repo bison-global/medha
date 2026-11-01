@@ -42,15 +42,24 @@ class FakeGuard implements GuardClassifier {
 }
 
 class FakeEngines implements ChatEngines {
-  FakeEngines({FakeInferenceEngine? chat, FakeInferenceEngine? guard})
+  FakeEngines({FakeInferenceEngine? chat, FakeInferenceEngine? guard, FakeEmbeddingEngine? embedder})
       : chat = chat ?? FakeInferenceEngine(delay: Duration.zero),
-        guard = guard ?? FakeInferenceEngine(delay: Duration.zero);
+        guard = guard ?? FakeInferenceEngine(delay: Duration.zero),
+        embedder = embedder ?? FakeEmbeddingEngine();
 
   @override
   final FakeInferenceEngine chat;
   @override
   final FakeInferenceEngine guard;
+  @override
+  final FakeEmbeddingEngine embedder;
   int chatLoads = 0;
+
+  @override
+  Future<bool> ensureEmbedder() async {
+    await embedder.load('');
+    return true;
+  }
 
   @override
   Future<void> ensureChat(InterestEntry entry) async {

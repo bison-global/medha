@@ -19,12 +19,26 @@ void main() {
       expect(c.baseModel(math.baseModelId).name, 'MiniCPM5-2B');
       expect(c.subjects.map((s) => s.interest), containsAll(['math', 'science', 'coding', 'wellness', 'farming']));
       expect(c.tiersFor('math').map((t) => t.tier), ['Lite', 'Pro']);
+      expect(c.embeddingModel?.name, 'Qwen3-Embedding-0.6B');
       expect(c.safety.crisisResources.map((r) => r.number), contains('14416'));
     });
 
-    test('M1 ships Math Lite only', () {
-      final available = devCatalog().interests.where((e) => e.available).map((e) => e.id);
-      expect(available, ['math-lite']);
+    test('ships nine subjects in Lite and Pro; Translate is coming soon', () {
+      final c = devCatalog();
+      final available = c.interests.where((e) => e.available).toList();
+      expect(available, hasLength(18));
+      expect(c.interests.where((e) => e.interest == 'translate').single.available, isFalse);
+      // Reasoning subjects share MiniCPM5 / Qwen3.5-4B; conversation subjects share Gemma 4.
+      for (final id in ['math', 'science', 'coding', 'exam']) {
+        expect(c.interestEntry('$id-lite').baseModelId, 'minicpm5-2b-q4km');
+        expect(c.interestEntry('$id-pro').baseModelId, 'qwen3_5-4b-q4km');
+      }
+      for (final id in ['wellness', 'general', 'writing', 'english', 'farming']) {
+        expect(c.interestEntry('$id-lite').baseModelId, 'gemma4-e2b-q4km');
+        expect(c.interestEntry('$id-lite').fallbackBaseModelId, 'qwen3_5-2b-q4km');
+        expect(c.interestEntry('$id-pro').baseModelId, 'gemma4-e4b-q4km');
+      }
+      expect(c.interestEntry('coding-lite').systemPrompt, contains('malware'));
     });
 
     test('rejects an interest that points at a missing model', () {
@@ -58,7 +72,7 @@ void main() {
       final payload = utf8.encode(jsonEncode(devCatalogJson()));
       final v = CatalogVerifier(publicKeys: {'test': publicKeyB64});
       final c = await v.parse(await signed(payload));
-      expect(c.version, 1);
+      expect(c.version, 2);
     });
 
     test('rejects a tampered payload', () async {

@@ -22,6 +22,7 @@ class LlamaEngine implements InferenceEngine {
   Isolate? _isolate;
   SendPort? _commands;
   String? _loadedId;
+  String? _adapter;
   String _template = 'native';
   int _nextGenerationId = 0;
   int? _activeGeneration;
@@ -53,7 +54,13 @@ class LlamaEngine implements InferenceEngine {
 
   @override
   Future<void> load(ModelHandle model) async {
-    if (_loadedId == model.id) return;
+    if (_loadedId == model.id) {
+      if (_adapter != model.adapterPath) {
+        await _call({'op': 'lora', 'path': model.adapterPath, 'scale': model.adapterScale});
+        _adapter = model.adapterPath;
+      }
+      return;
+    }
     if (_loadedId != null) await unload();
     await _call({
       'op': 'load',
@@ -64,6 +71,11 @@ class LlamaEngine implements InferenceEngine {
     });
     _loadedId = model.id;
     _template = model.promptTemplate;
+    _adapter = null;
+    if (model.adapterPath != null) {
+      await _call({'op': 'lora', 'path': model.adapterPath, 'scale': model.adapterScale});
+      _adapter = model.adapterPath;
+    }
   }
 
   @override
@@ -137,6 +149,7 @@ class LlamaEngine implements InferenceEngine {
     if (_loadedId == null) return;
     await _call({'op': 'unload'});
     _loadedId = null;
+    _adapter = null;
   }
 
   Future<void> dispose() async {
@@ -236,6 +249,19 @@ void _llamaWorkerMain(SendPort ready) {
           cancelled.remove(id);
         }
 
+      case 'lora':
+        final m = model;
+        if (m == null) {
+          reply.send(<String, Object?>{'error': 'No model loaded'});
+          return;
+        }
+        try {
+          m.setLora(msg['path'] as String?, scale: msg['scale'] as double);
+          reply.send(<String, Object?>{'ok': true});
+        } on Object catch (e) {
+          reply.send(<String, Object?>{'error': '$e'});
+        }
+
       case 'unload':
         model?.close();
         model = null;
@@ -250,5 +276,85 @@ void _llamaWorkerMain(SendPort ready) {
       return;
     }
     queue = queue.then((_) => handle(msg));
+  });
+}
+
+/// Runs an embedding model in its own isolate.
+class LlamaEmbeddingEngine implements EmbeddingEngine {
+  Isolate? _isolate;
+  SendPort? _commands;
+  String? _path;
+
+  @override
+  bool get isLoaded => _path != null;
+
+  Future<Map<Object?, Object?>> _call(Map<String, Object?> msg) async {
+    var commands = _commands;
+    if (commands == null) {
+      final ready = ReceivePort();
+      _isolate = await Isolate.spawn(_embedWorkerMain, ready.sendPort, debugName: 'medha-embed');
+      commands = await ready.first as SendPort;
+      ready.close();
+      _commands = commands;
+    }
+    final reply = ReceivePort();
+    commands.send({...msg, 'reply': reply.sendPort});
+    final res = await reply.first as Map<Object?, Object?>;
+    reply.close();
+    final error = res['error'];
+    if (error != null) throw InferenceException(error as String);
+    return res;
+  }
+
+  @override
+  Future<void> load(String path) async {
+    if (_path == path) return;
+    await _call({'op': 'load', 'path': path});
+    _path = path;
+  }
+
+  @override
+  Future<List<double>> embed(String text) async {
+    if (_path == null) throw InferenceException('No embedding model loaded');
+    final res = await _call({'op': 'embed', 'text': text});
+    return (res['v'] as List).cast<double>();
+  }
+
+  @override
+  Future<void> unload() async {
+    if (_path == null) return;
+    await _call({'op': 'unload'});
+    _path = null;
+    _isolate?.kill(priority: Isolate.beforeNextEvent);
+    _isolate = null;
+    _commands = null;
+  }
+}
+
+void _embedWorkerMain(SendPort ready) {
+  final commands = ReceivePort();
+  ready.send(commands.sendPort);
+  MedhaLlama? model;
+  commands.listen((raw) {
+    final msg = raw as Map<Object?, Object?>;
+    final reply = msg['reply'] as SendPort;
+    try {
+      switch (msg['op']) {
+        case 'load':
+          model?.close();
+          model = MedhaLlama.loadEmbedder(msg['path'] as String, contextTokens: 1024, threads: 2);
+          reply.send(<String, Object?>{'ok': true});
+        case 'embed':
+          final m = model;
+          if (m == null) throw StateError('No embedding model loaded');
+          reply.send(<String, Object?>{'v': m.embed(msg['text'] as String)});
+        case 'unload':
+          model?.close();
+          model = null;
+          reply.send(<String, Object?>{'ok': true});
+      }
+    } on Object catch (e) {
+      reply.send(<String, Object?>{'error': '$e'});
+    }
   });
 }

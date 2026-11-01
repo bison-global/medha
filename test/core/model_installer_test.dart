@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:medha/core/catalog/catalog.dart';
+import 'package:medha/core/device/device_memory.dart';
 import 'package:medha/core/download/model_downloader.dart';
 import 'package:medha/core/download/model_installer.dart';
 import 'package:medha/core/storage/repositories.dart';
@@ -64,8 +65,10 @@ void main() {
 
   tearDown(() => tmp.delete(recursive: true));
 
-  ModelInstaller installer(InMemoryModelRepository repo, ModelDownloader d, {List<String>? warmed}) => ModelInstaller(
+  ModelInstaller installer(InMemoryModelRepository repo, ModelDownloader d, {List<String>? warmed, int? ramMb = 8192}) =>
+      ModelInstaller(
         catalog: catalog,
+        memory: FixedDeviceMemory(ramMb),
         repository: repo,
         downloader: d,
         modelsDirectory: Directory(p.join(tmp.path, 'models')),
@@ -125,5 +128,30 @@ void main() {
     final states = await inst.install(c.interestEntry('math-lite'), wifiOnly: true).toList();
     expect(states.last.stage, InstallStage.failed);
     expect(states.last.error, contains('make_catalog'));
+  });
+
+  group('memory plan', () {
+    test('fits when the phone has enough RAM, or RAM is unknown', () async {
+      final repo = InMemoryModelRepository();
+      final entry = catalog.interestEntry('general-lite');
+      expect((await installer(repo, FakeDownloader(files)).plan(entry)).fit, TierFit.fits);
+      expect((await installer(repo, FakeDownloader(files), ramMb: null).plan(entry)).fit, TierFit.fits);
+    });
+
+    test('uses the smaller fallback model on a low-RAM phone', () async {
+      final plan = await installer(InMemoryModelRepository(), FakeDownloader(files), ramMb: 3000).plan(catalog.interestEntry('general-lite'));
+      expect(plan.fit, TierFit.fallback);
+      expect(plan.baseModelId, 'qwen3_5-2b-q4km');
+    });
+
+    test('says Pro is too big when there is no fallback', () async {
+      final plan = await installer(InMemoryModelRepository(), FakeDownloader(files), ramMb: 4096).plan(catalog.interestEntry('math-pro'));
+      expect(plan.fit, TierFit.tooBig);
+    });
+  });
+
+  test('parseMemTotalMb reads /proc/meminfo', () {
+    expect(parseMemTotalMb('MemTotal:        7864320 kB\nMemFree: 1 kB'), 7680);
+    expect(parseMemTotalMb('nothing'), isNull);
   });
 }

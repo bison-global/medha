@@ -62,6 +62,20 @@ MEDHA_API int32_t medha_next(medha_ctx * ctx, char * buf, int32_t buf_len);
 // Number of prompt tokens the last medha_begin() consumed.
 MEDHA_API int32_t medha_prompt_tokens(medha_ctx * ctx);
 
+// Applies a LoRA adapter (a subject add-on) at [scale], replacing any
+// previous one. Pass path = NULL to remove adapters. Returns 0 on success.
+MEDHA_API int32_t medha_set_lora(medha_ctx * ctx, const char * path, float scale);
+
+// Loads an embedding model (pooled sentence embeddings).
+MEDHA_API medha_ctx * medha_load_embedder(const char * path, int32_t n_ctx, int32_t n_threads, int32_t n_gpu_layers);
+
+// Embedding width of a model loaded with medha_load_embedder().
+MEDHA_API int32_t medha_embedding_size(medha_ctx * ctx);
+
+// Embeds [text] into [out] (capacity [out_len] floats). Text longer than the
+// context is truncated. Returns the number of floats written, or < 0.
+MEDHA_API int32_t medha_embed(medha_ctx * ctx, const char * text, float * out, int32_t out_len);
+
 // Last error message for this thread, or "" if none.
 MEDHA_API const char * medha_last_error(void);
 

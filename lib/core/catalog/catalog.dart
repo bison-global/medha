@@ -97,6 +97,28 @@ class ThinkingConfig {
       ThinkingConfig(enabled: (j?['enabled'] as bool?) ?? false, maxTokens: (j?['maxTokens'] as num?)?.toInt() ?? 0);
 }
 
+/// A LoRA subject add-on applied on top of a base model.
+class AdapterFile {
+  const AdapterFile({required this.id, required this.url, required this.bytes, required this.sha256, this.scale = 1.0});
+  final String id;
+  final String url;
+  final int bytes;
+  final String sha256;
+  final double scale;
+
+  String get fileName => '$id.lora.gguf';
+
+  static AdapterFile? fromJson(Map<String, dynamic>? j) => j == null
+      ? null
+      : AdapterFile(
+          id: j['id'] as String,
+          url: (j['url'] as String?) ?? '',
+          bytes: (j['bytes'] as num?)?.toInt() ?? 0,
+          sha256: (j['sha256'] as String?) ?? '',
+          scale: (j['scale'] as num?)?.toDouble() ?? 1.0,
+        );
+}
+
 /// A subject + tier the user can pick, e.g. "Medha Math Lite".
 class InterestEntry {
   const InterestEntry({
@@ -116,6 +138,8 @@ class InterestEntry {
     required this.prompts,
     required this.available,
     this.fallbackBaseModelId,
+    this.adapter,
+    this.tag,
   });
 
   final String id;
@@ -137,6 +161,12 @@ class InterestEntry {
   /// False for subjects listed in the catalog but not shipped yet.
   final bool available;
 
+  /// Optional fine-tuned add-on (ARCHITECTURE.md §5.3).
+  final AdapterFile? adapter;
+
+  /// Short label on the subject card, e.g. "Best with voice".
+  final String? tag;
+
   String get displayName => 'Medha $name $sizeLabel';
 
   factory InterestEntry.fromJson(Map<String, dynamic> j) => InterestEntry(
@@ -156,6 +186,8 @@ class InterestEntry {
         maxNewTokens: (j['maxNewTokens'] as num?)?.toInt() ?? 768,
         prompts: ((j['prompts'] as List?) ?? const []).cast<String>(),
         available: (j['available'] as bool?) ?? true,
+        adapter: AdapterFile.fromJson(j['adapter'] as Map<String, dynamic>?),
+        tag: j['tag'] as String?,
       );
 }
 
@@ -230,9 +262,20 @@ class SafetyConfig {
 }
 
 class Catalog {
-  const Catalog({required this.version, required this.baseModels, required this.interests, required this.safety});
+  const Catalog({
+    required this.version,
+    required this.baseModels,
+    required this.interests,
+    required this.safety,
+    this.embeddingModelId,
+  });
 
   final int version;
+
+  /// Model used to index documents for search, downloaded with the first upload.
+  final String? embeddingModelId;
+
+  BaseModel? get embeddingModel => embeddingModelId == null ? null : baseModels[embeddingModelId];
   final Map<String, BaseModel> baseModels;
   final List<InterestEntry> interests;
   final SafetyConfig safety;
@@ -270,12 +313,17 @@ class Catalog {
       baseModels: bases,
       interests: interests,
       safety: SafetyConfig.fromJson(j['safety'] as Map<String, dynamic>),
+      embeddingModelId: j['embeddingModelId'] as String?,
     );
     catalog._validate();
     return catalog;
   }
 
   void _validate() {
+    final emb = embeddingModelId;
+    if (emb != null && !baseModels.containsKey(emb)) {
+      throw const FormatException('Catalog embeddingModelId does not match a base model');
+    }
     if (!baseModels.containsKey(safety.guardModelId)) {
       throw const FormatException('Catalog safety.guardModelId does not match a base model');
     }

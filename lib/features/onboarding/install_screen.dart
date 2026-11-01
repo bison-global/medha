@@ -39,8 +39,15 @@ class _InstallScreenState extends ConsumerState<InstallScreen> {
       setState(() => _state = s);
       if (s.stage == InstallStage.done) {
         ref.invalidate(installedEntriesProvider);
-        final chat = await services.chatRepository.createChat(entryId: entry.id);
-        if (mounted) context.go('/chat/${chat.id}');
+        final chat = await services.chatRepository.createChat(entryId: entry.id, ephemeral: !services.settings.saveHistory);
+        if (!mounted) return;
+        final lock = services.appLock;
+        // After the first model, offer the app lock (ARCHITECTURE.md §9.1).
+        if (!lock.enabled && !lock.asked) {
+          context.go('/secure?next=${Uri.encodeComponent('/chat/${chat.id}')}');
+        } else {
+          context.go('/chat/${chat.id}');
+        }
       }
     });
   }

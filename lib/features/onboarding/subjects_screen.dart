@@ -40,7 +40,7 @@ class SubjectsScreen extends ConsumerWidget {
                 crossAxisCount: 2,
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
-                mainAxisExtent: 160,
+                mainAxisExtent: 170,
               ),
               itemCount: subjects.length,
               itemBuilder: (context, i) {
@@ -90,7 +90,7 @@ class _SubjectCard extends StatelessWidget {
                 child: Text(entry.blurb,
                     maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, height: 1.4, color: MedhaColors.muted)),
               ),
-              if (!available) const Pill('Coming soon'),
+              if (!available) const Pill('Coming soon') else if (entry.tag != null) Pill(entry.tag!),
             ]),
           ),
         ),

@@ -63,3 +63,35 @@ class FakeInferenceEngine implements InferenceEngine {
         'You asked: "${last.content}". With a downloaded model, the answer would be generated here on your phone.';
   }
 }
+
+/// Deterministic bag-of-words embeddings for tests and demo mode: texts that
+/// share words get similar vectors.
+class FakeEmbeddingEngine implements EmbeddingEngine {
+  FakeEmbeddingEngine({this.dimensions = 64});
+  final int dimensions;
+  bool _loaded = false;
+
+  @override
+  bool get isLoaded => _loaded;
+
+  @override
+  Future<void> load(String path) async => _loaded = true;
+
+  @override
+  Future<List<double>> embed(String text) async {
+    final v = List<double>.filled(dimensions, 0);
+    for (final w in RegExp(r'[\p{L}\p{N}]+', unicode: true).allMatches(text.toLowerCase())) {
+      final word = w.group(0)!;
+      if (word.length < 3) continue;
+      var h = 0;
+      for (final c in word.codeUnits) {
+        h = (h * 31 + c) & 0x7fffffff;
+      }
+      v[h % dimensions] += 1;
+    }
+    return v;
+  }
+
+  @override
+  Future<void> unload() async => _loaded = false;
+}

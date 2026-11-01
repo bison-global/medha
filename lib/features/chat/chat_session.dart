@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../core/catalog/catalog.dart';
+import '../../core/documents/document_index.dart';
 import '../../core/inference/context_builder.dart';
 import '../../core/inference/engine_manager.dart';
 import '../../core/inference/inference_engine.dart';
@@ -22,6 +23,7 @@ class ChatSession extends ChangeNotifier {
     required this.safety,
     this.contextBuilder = const ContextBuilder(),
     this.outputCheckEvery = 120,
+    this.index,
   });
 
   final String chatId;
@@ -34,6 +36,10 @@ class ChatSession extends ChangeNotifier {
   /// Re-check the streaming reply with the guard model every N chunks.
   final int outputCheckEvery;
 
+  /// Document search for project files and attachments (null in tests that
+  /// don't need it).
+  final DocumentIndex? index;
+
   ChatSummary? _chat;
   List<ChatMessage> _messages = const [];
   bool _loading = true;
@@ -41,8 +47,16 @@ class ChatSession extends ChangeNotifier {
   bool _stopRequested = false;
   bool _disposed = false;
   String? _loadError;
+  String? _status;
+  Map<String, DocumentRecord> _attachments = const {};
 
   ChatSummary? get chat => _chat;
+
+  /// A short progress note while working, e.g. "Reading notes.pdf…".
+  String? get status => _status;
+
+  /// Files attached in this chat, by id.
+  Map<String, DocumentRecord> get attachments => _attachments;
   List<ChatMessage> get messages => _messages;
   bool get loading => _loading;
   bool get busy => _busy;
@@ -72,6 +86,7 @@ class ChatSession extends ChangeNotifier {
         _loadError = 'This chat no longer exists.';
       } else {
         _messages = await repository.messages(chatId);
+        await _loadAttachments();
         // A reply interrupted by the app closing is shown as stopped.
         for (final m in _messages.where((m) => m.status == MessageStatus.streaming).toList()) {
           await _put(m.copyWith(status: MessageStatus.cancelled));
@@ -82,6 +97,12 @@ class ChatSession extends ChangeNotifier {
     }
     _loading = false;
     _notify();
+  }
+
+  Future<void> _loadAttachments() async {
+    final idx = index;
+    if (idx == null) return;
+    _attachments = {for (final d in await idx.documents.forChat(chatId)) d.id: d};
   }
 
   Future<void> _put(ChatMessage m) async {
@@ -105,17 +126,43 @@ class ChatSession extends ChangeNotifier {
     await engines.chat.cancel();
   }
 
-  Future<void> send(String raw) async {
-    final text = raw.trim();
+  /// Sends a message, optionally with a file attached ([attachment]) or
+  /// spoken in voice mode ([voice]).
+  Future<void> send(String raw, {bool voice = false, PickedFile? attachment}) async {
+    var text = raw.trim();
     final chat = _chat;
     final entry = this.entry;
-    if (text.isEmpty || _busy || chat == null || entry == null) return;
+    if ((text.isEmpty && attachment == null) || _busy || chat == null || entry == null) return;
 
     _busy = true;
     _stopRequested = false;
     _notify();
     try {
-      final userMessage = ChatMessage.create(chatId: chatId, role: ChatRole.user, content: text);
+      String? attachmentText;
+      String? documentId;
+      if (attachment != null) {
+        final idx = index;
+        if (idx == null) return;
+        _status = 'Reading ${attachment.name}…';
+        _notify();
+        try {
+          final (record, extracted) = await idx.add(attachment, chatId: chatId);
+          documentId = record.id;
+          attachmentText = extracted;
+          await _loadAttachments();
+        } on UploadRejected catch (e) {
+          await _assistantNote(e.message, MessageKind.notice);
+          return;
+        } on Object {
+          await _assistantNote("Medha couldn't read ${attachment.name}. Try a different file.", MessageKind.notice);
+          return;
+        } finally {
+          _status = null;
+        }
+        if (text.isEmpty) text = 'Please look at the attached file.';
+      }
+
+      final userMessage = ChatMessage.create(chatId: chatId, role: ChatRole.user, content: text, voice: voice, documentId: documentId);
       await _put(userMessage);
       if (chat.title == 'New chat') {
         final title = text.length <= 40 ? text : '${text.substring(0, 39)}…';
@@ -126,7 +173,7 @@ class ChatSession extends ChangeNotifier {
       InputDecision decision;
       try {
         await engines.ensureGuard();
-        decision = await safety.checkInput(text);
+        decision = await safety.checkInput(text, attachmentText: attachmentText);
       } on Object {
         decision = UnavailableInput(catalog.safety.refusalFor('unavailable'));
       }
@@ -165,10 +212,28 @@ class ChatSession extends ChangeNotifier {
           if (m.isConversational) ChatTurn(m.role, m.content),
       ];
 
+  Future<(String, List<String>)> _reference(InterestEntry entry, String query, {required bool crisis}) async {
+    final idx = index;
+    final chat = _chat;
+    if (idx == null || chat == null) return ('', const <String>[]);
+    if (chat.projectId == null && _attachments.isEmpty) return ('', const <String>[]);
+    try {
+      final hits = await idx.search(query, projectId: chat.projectId, chatId: _attachments.isEmpty ? null : chatId);
+      if (hits.isEmpty) return ('', const <String>[]);
+      final budget = contextBuilder.referenceBudgetChars(catalog.safety, entry, crisis: crisis);
+      final names = {for (final h in hits) h.documentName}.toList();
+      return (formatReference(hits, maxChars: budget), names);
+    } on Object {
+      return ('', const <String>[]);
+    }
+  }
+
   Future<void> _reply(InterestEntry entry, String userText, {required bool crisis}) async {
     var reply = ChatMessage.create(chatId: chatId, role: ChatRole.assistant, content: '', status: MessageStatus.streaming);
-    final turns = contextBuilder.build(safety: catalog.safety, entry: entry, history: _history(), crisis: crisis);
     await _put(reply);
+    final (reference, sources) = await _reference(entry, userText, crisis: crisis);
+    final history = _history()..removeWhere((t) => t.role == ChatRole.assistant && t.content.isEmpty);
+    final turns = contextBuilder.build(safety: catalog.safety, entry: entry, history: history, crisis: crisis, reference: reference);
 
     final splitter = ThinkingSplitter();
     BlockOutput? blocked;
@@ -243,7 +308,7 @@ class ChatSession extends ChangeNotifier {
     } else if (splitter.answer.trim().isEmpty) {
       reply = reply.copyWith(content: "I couldn't come up with an answer. Please try rephrasing.", status: MessageStatus.error);
     } else {
-      reply = reply.copyWith(content: splitter.answer.trim(), status: MessageStatus.done);
+      reply = reply.copyWith(content: splitter.answer.trim(), status: MessageStatus.done, sources: sources);
     }
     await _put(reply);
   }
