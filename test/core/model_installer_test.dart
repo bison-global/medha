@@ -117,6 +117,9 @@ void main() {
 
   test('refuses models with no checksum in the catalog', () async {
     final j = devCatalogJson();
+    for (final b in (j['baseModels'] as List).cast<Map<String, dynamic>>()) {
+      if (b['id'] == 'qwen3_5-4b-q4km') b['file'] = {'url': '', 'bytes': 1, 'sha256': ''};
+    }
     final c = Catalog.fromJson(j);
     final inst = ModelInstaller(
       catalog: c,
@@ -125,7 +128,6 @@ void main() {
       modelsDirectory: Directory(p.join(tmp.path, 'models')),
       warmUp: (_, __) async {},
     );
-    // Pro models have no download link yet in the bundled catalog.
     final states = await inst.install(c.interestEntry('math-pro'), wifiOnly: true).toList();
     expect(states.last.stage, InstallStage.failed);
     expect(states.last.error, contains('make_catalog'));

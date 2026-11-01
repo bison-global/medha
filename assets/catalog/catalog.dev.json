@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "baseModels": [
     {
       "id": "minicpm5-2b-q4km",
@@ -24,9 +24,9 @@
       "licenseText": "Licensed under the Apache License, Version 2.0. Full text: https://www.apache.org/licenses/LICENSE-2.0",
       "notice": null,
       "file": {
-        "url": "",
-        "bytes": 2900000000,
-        "sha256": ""
+        "url": "https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/main/Qwen3.5-4B-Q4_K_M.gguf",
+        "bytes": 2740000000,
+        "sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4"
       },
       "minRamMb": 6144,
       "promptTemplate": "chatml"
@@ -39,9 +39,9 @@
       "licenseText": "Licensed under the Apache License, Version 2.0. Full text: https://www.apache.org/licenses/LICENSE-2.0",
       "notice": null,
       "file": {
-        "url": "",
-        "bytes": 1400000000,
-        "sha256": ""
+        "url": "https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/main/Qwen3.5-2B-Q4_K_M.gguf",
+        "bytes": 1280000000,
+        "sha256": "aaf42c8b7c3cab2bf3d69c355048d4a0ee9973d48f16c731c0520ee914699223"
       },
       "minRamMb": 2560,
       "promptTemplate": "chatml"
@@ -69,9 +69,9 @@
       "licenseText": "Licensed under the Apache License, Version 2.0. Full text: https://www.apache.org/licenses/LICENSE-2.0",
       "notice": null,
       "file": {
-        "url": "",
-        "bytes": 5000000000,
-        "sha256": ""
+        "url": "https://huggingface.co/unsloth/gemma-4-E4B-it-GGUF/resolve/main/gemma-4-E4B-it-Q4_K_M.gguf",
+        "bytes": 4977171584,
+        "sha256": "85a896a047553e842f25297ee5b031d64ff30147d9c4af17b1e4b394cd1fab87"
       },
       "minRamMb": 7680,
       "promptTemplate": "native"
