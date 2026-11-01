@@ -4,6 +4,9 @@ analyzer:
   exclude:
     - native/**
     - build/**
+    - web/**
+    - android/**
+    - ios/**
 
 linter:
   rules:
