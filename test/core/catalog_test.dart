@@ -72,7 +72,7 @@ void main() {
       final payload = utf8.encode(jsonEncode(devCatalogJson()));
       final v = CatalogVerifier(publicKeys: {'test': publicKeyB64});
       final c = await v.parse(await signed(payload));
-      expect(c.version, 2);
+      expect(c.version, 3);
     });
 
     test('rejects a tampered payload', () async {

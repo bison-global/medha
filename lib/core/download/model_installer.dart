@@ -146,10 +146,14 @@ class ModelInstaller implements Installer {
         var done = 0;
         final partial = Directory(p.join(modelsDirectory.path, 'partial'));
 
+        // Check every file first, so nothing is downloaded for an entry
+        // that can't be completed.
         for (final f in files) {
           if (f.sha256.isEmpty || f.url.isEmpty) {
             throw IntegrityException('The catalog has no download or checksum for ${f.name}. Build one with tool/make_catalog.dart.');
           }
+        }
+        for (final f in files) {
           if (cancelled) return;
           currentFile = f.fileName;
           final file = await downloader.download(

@@ -125,7 +125,8 @@ void main() {
       modelsDirectory: Directory(p.join(tmp.path, 'models')),
       warmUp: (_, __) async {},
     );
-    final states = await inst.install(c.interestEntry('math-lite'), wifiOnly: true).toList();
+    // Pro models have no download link yet in the bundled catalog.
+    final states = await inst.install(c.interestEntry('math-pro'), wifiOnly: true).toList();
     expect(states.last.stage, InstallStage.failed);
     expect(states.last.error, contains('make_catalog'));
   });

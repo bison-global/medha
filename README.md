@@ -36,25 +36,28 @@ flutter run --dart-define=MEDHA_FAKE_ENGINE=true
 
 ### Run with real models
 
-1. **Get the models.** Download the GGUF files listed in `assets/catalog/catalog.dev.json` (`baseModels`: the chat models, Qwen3Guard-Gen-0.6B and Qwen3-Embedding-0.6B) and host them somewhere the phone can reach. You only need the models for the subjects you want to test, plus the guard and the embedding model.
-2. **Build a catalog** with their real sizes and checksums. The bundled `assets/catalog/catalog.dev.json` has none, so the installer refuses to download until you do this.
+The bundled catalog (`assets/catalog/catalog.dev.json`) already has Hugging Face download links and SHA-256 checksums for the **Lite** models (MiniCPM5-2B, Gemma 4 E2B), the safety model (Qwen3Guard-Gen-0.6B) and the search model (Qwen3-Embedding-0.6B). A debug build with no flags downloads them on the phone:
+
+```bash
+flutter run
+```
+
+**Pro models and the low-memory fallback** (Qwen3.5-4B, Gemma 4 E4B, Qwen3.5-2B) don't have links yet, so picking Pro shows an error. To add them, or to host the models yourself, build a catalog:
+
+1. Download the GGUF files to your computer.
+2. Run `make_catalog`, which fills in sizes and checksums:
    ```bash
    dart run tool/make_catalog.dart --gen-key --key-out catalog_signing.seed   # once; keep it secret
-   dart run tool/make_catalog.dart \
-     --model minicpm5-2b-q4km=/path/MiniCPM5-2B-Q4_K_M.gguf=https://your-cdn/minicpm5-2b-q4_k_m.gguf \
-     --model qwen3guard-gen-0_6b-q4km=/path/Qwen3Guard-Gen-0.6B-Q4_K_M.gguf=https://your-cdn/qwen3guard-gen-0.6b-q4_k_m.gguf \
-     --version 2 --key catalog_signing.seed --key-id medha-2026-1 --out catalog.json
+   dart run tool/make_catalog.dart --template assets/catalog/catalog.dev.json \
+     --model qwen3_5-4b-q4km=/path/Qwen3.5-4B-Q4_K_M.gguf=https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/main/Qwen3.5-4B-Q4_K_M.gguf \
+     --version 4 --key catalog_signing.seed --key-id medha-2026-1 --out catalog.json
    ```
-3. **Trust the key.** Add the printed public key to `kCatalogPublicKeys` in `lib/core/catalog/catalog_service.dart`.
-4. **Point the app at the catalog** and run it:
-   ```bash
-   flutter run --dart-define=MEDHA_CATALOG_URL=https://your-cdn/catalog.json
-   ```
-5. **Optional:** send "Report this reply" submissions to your server with `--dart-define=MEDHA_REPORT_URL=https://your-api/reports`. Without it, reports stay queued on the phone.
-6. **iOS only:** build the llama.cpp framework once on a Mac:
-   ```bash
-   ./tool/build_ios_llama.sh
-   ```
+3. Add the printed public key to `kCatalogPublicKeys` in `lib/core/catalog/catalog_service.dart`, or skip `--key` for debug builds.
+4. Either copy the output over the bundled catalog, or host it and run with `--dart-define=MEDHA_CATALOG_URL=https://…/catalog.json`.
+
+**Optional:** send "Report this reply" submissions to your server with `--dart-define=MEDHA_REPORT_URL=https://your-api/reports`. Without it, reports stay queued on the phone.
+
+**iOS only:** build the llama.cpp framework once on a Mac with `./tool/build_ios_llama.sh`.
 
 Release builds only accept catalogs signed with a key in `kCatalogPublicKeys`. Debug builds also accept the unsigned dev catalog.
 

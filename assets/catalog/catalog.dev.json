@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "baseModels": [
     {
       "id": "minicpm5-2b-q4km",
@@ -9,9 +9,9 @@
       "licenseText": "Licensed under the Apache License, Version 2.0. Full text: https://www.apache.org/licenses/LICENSE-2.0",
       "notice": null,
       "file": {
-        "url": "",
-        "bytes": 1700000000,
-        "sha256": ""
+        "url": "https://huggingface.co/bartowski/MiniCPM5-2B-GGUF/resolve/main/MiniCPM5-2B-Q4_K_M.gguf",
+        "bytes": 1615826144,
+        "sha256": "967d467b5a73f2def7f339f8ad724a984fe1caa323006577cd9c26adb755f0de"
       },
       "minRamMb": 3072,
       "promptTemplate": "native"
@@ -54,9 +54,9 @@
       "licenseText": "Licensed under the Apache License, Version 2.0. Full text: https://www.apache.org/licenses/LICENSE-2.0",
       "notice": null,
       "file": {
-        "url": "",
-        "bytes": 3200000000,
-        "sha256": ""
+        "url": "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/gemma-4-E2B-it-Q4_K_M.gguf",
+        "bytes": 3106738272,
+        "sha256": "740185b21d22ceb83a11c3aa62ad5842ef32c70f6096d756bbee85a1e4ec34b8"
       },
       "minRamMb": 4608,
       "promptTemplate": "native"
@@ -84,9 +84,9 @@
       "licenseText": "Licensed under the Apache License, Version 2.0. Full text: https://www.apache.org/licenses/LICENSE-2.0",
       "notice": null,
       "file": {
-        "url": "",
-        "bytes": 500000000,
-        "sha256": ""
+        "url": "https://huggingface.co/QuantFactory/Qwen3Guard-Gen-0.6B-GGUF/resolve/main/Qwen3Guard-Gen-0.6B.Q4_K_M.gguf",
+        "bytes": 484000000,
+        "sha256": "a0d3385101ba362822d914ba40d9767aff634811ac99a41e4509de2d7a453b3e"
       },
       "minRamMb": 1024,
       "promptTemplate": "chatml"
@@ -99,9 +99,9 @@
       "licenseText": "Licensed under the Apache License, Version 2.0. Full text: https://www.apache.org/licenses/LICENSE-2.0",
       "notice": null,
       "file": {
-        "url": "",
-        "bytes": 640000000,
-        "sha256": ""
+        "url": "https://huggingface.co/PeterAM4/Qwen3-Embedding-0.6B-GGUF/resolve/main/Qwen3-Embedding-0.6B-Q8_0.gguf",
+        "bytes": 639000000,
+        "sha256": "3e42f708341ab5ff73e9d4e95cfc10b68ed98f0e62b2eea352a37a3b8f3c4f9e"
       },
       "minRamMb": 1024,
       "promptTemplate": "chatml"
