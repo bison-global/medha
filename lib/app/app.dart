@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/common/widgets.dart';
+import '../features/lock/lock_screen.dart';
 import 'providers.dart';
 import 'router.dart';
 import 'theme.dart';
@@ -18,7 +19,8 @@ class MedhaApp extends ConsumerStatefulWidget {
 }
 
 class _MedhaAppState extends ConsumerState<MedhaApp> with WidgetsBindingObserver {
-  late final GoRouter _router = buildRouter(initialLocation: widget.initialLocation, lock: ref.read(appLockProvider));
+  late final GoRouter _router = buildRouter(initialLocation: widget.initialLocation);
+  final _lockNavigator = GlobalKey<NavigatorState>();
   bool _covered = false;
 
   @override
@@ -57,7 +59,9 @@ class _MedhaAppState extends ConsumerState<MedhaApp> with WidgetsBindingObserver
   }
 
   @override
-  Widget build(BuildContext context) => MaterialApp.router(
+  Widget build(BuildContext context) {
+    final locked = ref.watch(appLockProvider.select((l) => l.locked));
+    return MaterialApp.router(
         title: 'Medha',
         debugShowCheckedModeBanner: false,
         theme: buildMedhaTheme(),
@@ -65,13 +69,23 @@ class _MedhaAppState extends ConsumerState<MedhaApp> with WidgetsBindingObserver
         themeMode: ThemeMode.dark,
         routerConfig: _router,
         builder: (context, child) => Stack(children: [
-          if (child != null) child,
+          // While locked the app stays alive but is not painted, can't be
+          // touched and is hidden from screen readers.
+          if (child != null) Offstage(offstage: locked, child: child),
+          if (locked)
+            Positioned.fill(
+              child: Navigator(
+                key: _lockNavigator,
+                onGenerateRoute: (_) => MaterialPageRoute<void>(builder: (_) => const LockScreen()),
+              ),
+            ),
           if (_covered)
             const Positioned.fill(
               child: ColoredBox(color: MedhaColors.ink, child: Center(child: MedhaLogo(size: 72))),
             ),
         ]),
       );
+  }
 }
 
 /// Shown when the app cannot start (e.g. untrusted catalog, storage error).

@@ -19,6 +19,17 @@ set(LLAMA_CURL OFF CACHE BOOL "" FORCE)
 set(GGML_OPENMP OFF CACHE BOOL "" FORCE)
 set(GGML_NATIVE OFF CACHE BOOL "" FORCE)
 
+if (ANDROID)
+    # Without this the CPU code is built for the oldest 64-bit ARM chips and
+    # skips the dot-product instructions that make quantised models fast.
+    # Every 64-bit phone that can run Medha (Android 9+, 3 GB+ RAM) has them.
+    set(GGML_CPU_ARM_ARCH "armv8.2-a+dotprod+fp16" CACHE STRING "" FORCE)
+    # Always optimise the engine, even in debug builds of the app.
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
+    set(CMAKE_C_FLAGS_DEBUG "-O3 -DNDEBUG" CACHE STRING "" FORCE)
+    set(CMAKE_CXX_FLAGS_DEBUG "-O3 -DNDEBUG" CACHE STRING "" FORCE)
+endif()
+
 add_subdirectory("${MEDHA_LLAMA_DIR}" llama_build EXCLUDE_FROM_ALL)
 
 add_library(medha_llama SHARED medha_llama.c)

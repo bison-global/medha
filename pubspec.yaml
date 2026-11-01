@@ -33,6 +33,7 @@ dependencies:
   sqlcipher_flutter_libs: ^0.6.7
   sqlite3: ^2.7.5
   url_launcher: ^6.3.1
+  wakelock_plus: ">=1.2.8 <2.0.0"
   xml: ^6.5.0
 
 dev_dependencies:
