@@ -88,7 +88,7 @@ class DocumentExtractor {
     try {
       final b = StringBuffer();
       for (final page in doc.pages) {
-        final PdfPageText? text = await page.loadText();
+        final text = await page.loadText();
         b
           ..write(text?.fullText ?? '')
           ..write('\n\n');
