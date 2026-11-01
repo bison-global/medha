@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "baseModels": [
     {
       "id": "minicpm5-2b-q4km",
@@ -8,7 +8,11 @@
       "license": "Apache-2.0",
       "licenseText": "Licensed under the Apache License, Version 2.0. Full text: https://www.apache.org/licenses/LICENSE-2.0",
       "notice": null,
-      "file": { "url": "", "bytes": 1700000000, "sha256": "" },
+      "file": {
+        "url": "",
+        "bytes": 1700000000,
+        "sha256": ""
+      },
       "minRamMb": 3072,
       "promptTemplate": "native"
     },
@@ -18,8 +22,28 @@
       "maker": "Qwen team, Alibaba Cloud",
       "license": "Apache-2.0",
       "licenseText": "Licensed under the Apache License, Version 2.0. Full text: https://www.apache.org/licenses/LICENSE-2.0",
-      "file": { "url": "", "bytes": 2900000000, "sha256": "" },
+      "notice": null,
+      "file": {
+        "url": "",
+        "bytes": 2900000000,
+        "sha256": ""
+      },
       "minRamMb": 6144,
+      "promptTemplate": "chatml"
+    },
+    {
+      "id": "qwen3_5-2b-q4km",
+      "name": "Qwen3.5-2B",
+      "maker": "Qwen team, Alibaba Cloud",
+      "license": "Apache-2.0",
+      "licenseText": "Licensed under the Apache License, Version 2.0. Full text: https://www.apache.org/licenses/LICENSE-2.0",
+      "notice": null,
+      "file": {
+        "url": "",
+        "bytes": 1400000000,
+        "sha256": ""
+      },
+      "minRamMb": 2560,
       "promptTemplate": "chatml"
     },
     {
@@ -28,8 +52,28 @@
       "maker": "Google DeepMind",
       "license": "Apache-2.0",
       "licenseText": "Licensed under the Apache License, Version 2.0. Full text: https://www.apache.org/licenses/LICENSE-2.0",
-      "file": { "url": "", "bytes": 3200000000, "sha256": "" },
+      "notice": null,
+      "file": {
+        "url": "",
+        "bytes": 3200000000,
+        "sha256": ""
+      },
       "minRamMb": 4608,
+      "promptTemplate": "native"
+    },
+    {
+      "id": "gemma4-e4b-q4km",
+      "name": "Gemma 4 E4B",
+      "maker": "Google DeepMind",
+      "license": "Apache-2.0",
+      "licenseText": "Licensed under the Apache License, Version 2.0. Full text: https://www.apache.org/licenses/LICENSE-2.0",
+      "notice": null,
+      "file": {
+        "url": "",
+        "bytes": 5000000000,
+        "sha256": ""
+      },
+      "minRamMb": 7680,
       "promptTemplate": "native"
     },
     {
@@ -38,7 +82,27 @@
       "maker": "Qwen team, Alibaba Cloud",
       "license": "Apache-2.0",
       "licenseText": "Licensed under the Apache License, Version 2.0. Full text: https://www.apache.org/licenses/LICENSE-2.0",
-      "file": { "url": "", "bytes": 500000000, "sha256": "" },
+      "notice": null,
+      "file": {
+        "url": "",
+        "bytes": 500000000,
+        "sha256": ""
+      },
+      "minRamMb": 1024,
+      "promptTemplate": "chatml"
+    },
+    {
+      "id": "qwen3-embedding-0_6b-q8",
+      "name": "Qwen3-Embedding-0.6B",
+      "maker": "Qwen team, Alibaba Cloud",
+      "license": "Apache-2.0",
+      "licenseText": "Licensed under the Apache License, Version 2.0. Full text: https://www.apache.org/licenses/LICENSE-2.0",
+      "notice": null,
+      "file": {
+        "url": "",
+        "bytes": 640000000,
+        "sha256": ""
+      },
       "minRamMb": 1024,
       "promptTemplate": "chatml"
     }
@@ -53,12 +117,23 @@
       "blurb": "Algebra, calculus and proofs, worked step by step",
       "color": "#7AA7FF",
       "baseModelId": "minicpm5-2b-q4km",
-      "systemPrompt": "You are Medha Math, a patient maths tutor running fully on the user's phone. Solve problems step by step, show your working, check the final answer, and explain any formula you use. If a question is ambiguous, say what you assumed.",
-      "sampling": { "temperature": 0.6, "topP": 0.95, "topK": 20 },
-      "thinking": { "enabled": true, "maxTokens": 1536 },
+      "systemPrompt": "You are Medha Math, a patient maths tutor. Solve problems step by step, show your working, check the final answer, and explain any formula you use. If a question is ambiguous, say what you assumed.",
+      "sampling": {
+        "temperature": 0.6,
+        "topP": 0.95,
+        "topK": 20
+      },
+      "thinking": {
+        "enabled": true,
+        "maxTokens": 1536
+      },
       "contextTokens": 4096,
       "maxNewTokens": 768,
-      "prompts": ["Solve x² − 5x + 6 = 0", "Explain derivatives with an example", "What is a prime number?"],
+      "prompts": [
+        "Solve x² − 5x + 6 = 0",
+        "Explain derivatives with an example",
+        "What is a prime number?"
+      ],
       "available": true
     },
     {
@@ -67,25 +142,492 @@
       "name": "Math",
       "tier": "Pro",
       "sizeLabel": "5B",
-      "blurb": "Deeper reasoning for multi-step problems",
+      "blurb": "Deeper reasoning and longer explanations.",
       "color": "#7AA7FF",
       "baseModelId": "qwen3_5-4b-q4km",
-      "systemPrompt": "You are Medha Math, a patient maths tutor running fully on the user's phone. Solve problems step by step, show your working and check the final answer.",
-      "sampling": { "temperature": 1.0, "topP": 0.95, "topK": 20, "presencePenalty": 1.5 },
-      "thinking": { "enabled": true, "maxTokens": 3072 },
+      "systemPrompt": "You are Medha Math, a patient maths tutor. Solve problems step by step, show your working, check the final answer, and explain any formula you use. If a question is ambiguous, say what you assumed.",
+      "sampling": {
+        "temperature": 1.0,
+        "topP": 0.95,
+        "topK": 20,
+        "presencePenalty": 1.5
+      },
+      "thinking": {
+        "enabled": true,
+        "maxTokens": 3072
+      },
       "contextTokens": 4096,
       "maxNewTokens": 768,
-      "prompts": ["Prove that √2 is irrational", "Integrate x·eˣ", "Explain eigenvalues simply"],
-      "available": false
+      "prompts": [
+        "Solve x² − 5x + 6 = 0",
+        "Explain derivatives with an example",
+        "What is a prime number?"
+      ],
+      "available": true
     },
-    { "id": "science-lite", "interest": "science", "name": "Science", "tier": "Lite", "sizeLabel": "2B", "blurb": "Physics, chemistry and biology explained simply", "color": "#B892FF", "baseModelId": "minicpm5-2b-q4km", "systemPrompt": "You are Medha Science.", "available": false },
-    { "id": "coding-lite", "interest": "coding", "name": "Coding", "tier": "Lite", "sizeLabel": "2B", "blurb": "Write, explain and fix code", "color": "#5CC8FF", "baseModelId": "minicpm5-2b-q4km", "systemPrompt": "You are Medha Coding.", "available": false },
-    { "id": "exam-lite", "interest": "exam", "name": "Exam Prep", "tier": "Lite", "sizeLabel": "2B", "blurb": "JEE, NEET and board-exam practice", "color": "#E8D44D", "baseModelId": "minicpm5-2b-q4km", "systemPrompt": "You are Medha Exam Prep.", "available": false },
-    { "id": "wellness-lite", "interest": "wellness", "name": "Wellness", "tier": "Lite", "sizeLabel": "2B", "blurb": "Sleep, stress, habits and calm routines", "color": "#5FD0A5", "baseModelId": "gemma4-e2b-q4km", "systemPrompt": "You are Medha Wellness.", "available": false },
-    { "id": "general-lite", "interest": "general", "name": "General", "tier": "Lite", "sizeLabel": "2B", "blurb": "Everyday questions, planning and ideas", "color": "#F5B04C", "baseModelId": "gemma4-e2b-q4km", "systemPrompt": "You are Medha General.", "available": false },
-    { "id": "writing-lite", "interest": "writing", "name": "Writing", "tier": "Lite", "sizeLabel": "2B", "blurb": "Emails, resumes, letters and posts", "color": "#E0E4EC", "baseModelId": "gemma4-e2b-q4km", "systemPrompt": "You are Medha Writing.", "available": false },
-    { "id": "english-lite", "interest": "english", "name": "Spoken English", "tier": "Lite", "sizeLabel": "2B", "blurb": "Practise speaking with gentle grammar fixes", "color": "#FF9F7A", "baseModelId": "gemma4-e2b-q4km", "systemPrompt": "You are Medha Spoken English.", "available": false },
-    { "id": "farming-lite", "interest": "farming", "name": "Farming", "tier": "Lite", "sizeLabel": "2B", "blurb": "Crops, pests, soil and seasons", "color": "#8BD45E", "baseModelId": "gemma4-e2b-q4km", "systemPrompt": "You are Medha Farming.", "available": false }
+    {
+      "id": "science-lite",
+      "interest": "science",
+      "name": "Science",
+      "tier": "Lite",
+      "sizeLabel": "2B",
+      "blurb": "Physics, chemistry and biology explained simply",
+      "color": "#B892FF",
+      "baseModelId": "minicpm5-2b-q4km",
+      "systemPrompt": "You are Medha Science. Explain physics, chemistry and biology clearly, from first principles, with everyday examples. Give units, state assumptions, and say when something is uncertain or still debated.",
+      "sampling": {
+        "temperature": 0.6,
+        "topP": 0.95,
+        "topK": 20
+      },
+      "thinking": {
+        "enabled": true,
+        "maxTokens": 1536
+      },
+      "contextTokens": 4096,
+      "maxNewTokens": 768,
+      "prompts": [
+        "Why is the sky blue?",
+        "How does photosynthesis work?",
+        "What is Newton's third law?"
+      ],
+      "available": true
+    },
+    {
+      "id": "science-pro",
+      "interest": "science",
+      "name": "Science",
+      "tier": "Pro",
+      "sizeLabel": "5B",
+      "blurb": "Deeper reasoning and longer explanations.",
+      "color": "#B892FF",
+      "baseModelId": "qwen3_5-4b-q4km",
+      "systemPrompt": "You are Medha Science. Explain physics, chemistry and biology clearly, from first principles, with everyday examples. Give units, state assumptions, and say when something is uncertain or still debated.",
+      "sampling": {
+        "temperature": 1.0,
+        "topP": 0.95,
+        "topK": 20,
+        "presencePenalty": 1.5
+      },
+      "thinking": {
+        "enabled": true,
+        "maxTokens": 3072
+      },
+      "contextTokens": 4096,
+      "maxNewTokens": 768,
+      "prompts": [
+        "Why is the sky blue?",
+        "How does photosynthesis work?",
+        "What is Newton's third law?"
+      ],
+      "available": true
+    },
+    {
+      "id": "coding-lite",
+      "interest": "coding",
+      "name": "Coding",
+      "tier": "Lite",
+      "sizeLabel": "2B",
+      "blurb": "Write, explain and fix code in Python, JavaScript and more",
+      "color": "#5CC8FF",
+      "baseModelId": "minicpm5-2b-q4km",
+      "systemPrompt": "You are Medha Coding. Write correct, readable code with short explanations. Prefer simple solutions, mention edge cases, and show how to run or test the code. Refuse to write malware, exploits, credential stealers or code meant to break into systems you don't own.",
+      "sampling": {
+        "temperature": 0.6,
+        "topP": 0.95,
+        "topK": 20
+      },
+      "thinking": {
+        "enabled": true,
+        "maxTokens": 1536
+      },
+      "contextTokens": 4096,
+      "maxNewTokens": 768,
+      "prompts": [
+        "Reverse a string in Python",
+        "What is a REST API?",
+        "Explain a for loop with an example"
+      ],
+      "available": true
+    },
+    {
+      "id": "coding-pro",
+      "interest": "coding",
+      "name": "Coding",
+      "tier": "Pro",
+      "sizeLabel": "5B",
+      "blurb": "Deeper reasoning and longer explanations.",
+      "color": "#5CC8FF",
+      "baseModelId": "qwen3_5-4b-q4km",
+      "systemPrompt": "You are Medha Coding. Write correct, readable code with short explanations. Prefer simple solutions, mention edge cases, and show how to run or test the code. Refuse to write malware, exploits, credential stealers or code meant to break into systems you don't own.",
+      "sampling": {
+        "temperature": 1.0,
+        "topP": 0.95,
+        "topK": 20,
+        "presencePenalty": 1.5
+      },
+      "thinking": {
+        "enabled": true,
+        "maxTokens": 3072
+      },
+      "contextTokens": 4096,
+      "maxNewTokens": 768,
+      "prompts": [
+        "Reverse a string in Python",
+        "What is a REST API?",
+        "Explain a for loop with an example"
+      ],
+      "available": true
+    },
+    {
+      "id": "exam-lite",
+      "interest": "exam",
+      "name": "Exam Prep",
+      "tier": "Lite",
+      "sizeLabel": "2B",
+      "blurb": "JEE, NEET and board-exam practice by syllabus",
+      "color": "#E8D44D",
+      "baseModelId": "minicpm5-2b-q4km",
+      "systemPrompt": "You are Medha Exam Prep, a tutor for JEE, NEET and school board exams. Explain solutions step by step so the student learns the method, not just the answer. Point out common mistakes and the key formula or concept. Never help cheat during a live exam.",
+      "sampling": {
+        "temperature": 0.6,
+        "topP": 0.95,
+        "topK": 20
+      },
+      "thinking": {
+        "enabled": true,
+        "maxTokens": 1536
+      },
+      "contextTokens": 4096,
+      "maxNewTokens": 768,
+      "prompts": [
+        "JEE: a quick trick for projectile range",
+        "NEET: explain mitosis in 5 steps",
+        "Make me a 30-minute revision plan"
+      ],
+      "available": true,
+      "tag": "Projects for your notes"
+    },
+    {
+      "id": "exam-pro",
+      "interest": "exam",
+      "name": "Exam Prep",
+      "tier": "Pro",
+      "sizeLabel": "5B",
+      "blurb": "Deeper reasoning and longer explanations.",
+      "color": "#E8D44D",
+      "baseModelId": "qwen3_5-4b-q4km",
+      "systemPrompt": "You are Medha Exam Prep, a tutor for JEE, NEET and school board exams. Explain solutions step by step so the student learns the method, not just the answer. Point out common mistakes and the key formula or concept. Never help cheat during a live exam.",
+      "sampling": {
+        "temperature": 1.0,
+        "topP": 0.95,
+        "topK": 20,
+        "presencePenalty": 1.5
+      },
+      "thinking": {
+        "enabled": true,
+        "maxTokens": 3072
+      },
+      "contextTokens": 4096,
+      "maxNewTokens": 768,
+      "prompts": [
+        "JEE: a quick trick for projectile range",
+        "NEET: explain mitosis in 5 steps",
+        "Make me a 30-minute revision plan"
+      ],
+      "available": true,
+      "tag": "Projects for your notes"
+    },
+    {
+      "id": "wellness-lite",
+      "interest": "wellness",
+      "name": "Wellness",
+      "tier": "Lite",
+      "sizeLabel": "2B",
+      "blurb": "Sleep, stress, habits and calm routines",
+      "color": "#5FD0A5",
+      "baseModelId": "gemma4-e2b-q4km",
+      "systemPrompt": "You are Medha Wellness, a supportive coach for sleep, stress, habits, movement and routines. Give practical, gentle suggestions. Do not diagnose conditions and do not name medicines or doses. Suggest seeing a doctor when symptoms are severe or last a long time.",
+      "sampling": {
+        "temperature": 1.0,
+        "topP": 0.95,
+        "topK": 64
+      },
+      "thinking": {
+        "enabled": false
+      },
+      "contextTokens": 4096,
+      "maxNewTokens": 768,
+      "prompts": [
+        "Help me wind down before sleep",
+        "A 5-minute stretch for desk work",
+        "How do I build a morning routine?"
+      ],
+      "available": true,
+      "fallbackBaseModelId": "qwen3_5-2b-q4km"
+    },
+    {
+      "id": "wellness-pro",
+      "interest": "wellness",
+      "name": "Wellness",
+      "tier": "Pro",
+      "sizeLabel": "5B",
+      "blurb": "Deeper reasoning and longer explanations.",
+      "color": "#5FD0A5",
+      "baseModelId": "gemma4-e4b-q4km",
+      "systemPrompt": "You are Medha Wellness, a supportive coach for sleep, stress, habits, movement and routines. Give practical, gentle suggestions. Do not diagnose conditions and do not name medicines or doses. Suggest seeing a doctor when symptoms are severe or last a long time.",
+      "sampling": {
+        "temperature": 1.0,
+        "topP": 0.95,
+        "topK": 64
+      },
+      "thinking": {
+        "enabled": false
+      },
+      "contextTokens": 4096,
+      "maxNewTokens": 768,
+      "prompts": [
+        "Help me wind down before sleep",
+        "A 5-minute stretch for desk work",
+        "How do I build a morning routine?"
+      ],
+      "available": true
+    },
+    {
+      "id": "general-lite",
+      "interest": "general",
+      "name": "General",
+      "tier": "Lite",
+      "sizeLabel": "2B",
+      "blurb": "Everyday questions, planning and ideas",
+      "color": "#F5B04C",
+      "baseModelId": "gemma4-e2b-q4km",
+      "systemPrompt": "You are Medha General, a helpful everyday assistant. Answer clearly and briefly, ask a short question when the request is unclear, and say so when you are not sure.",
+      "sampling": {
+        "temperature": 1.0,
+        "topP": 0.95,
+        "topK": 64
+      },
+      "thinking": {
+        "enabled": false
+      },
+      "contextTokens": 4096,
+      "maxNewTokens": 768,
+      "prompts": [
+        "Plan a 3-day study timetable",
+        "Summarize the water cycle",
+        "Give me 3 weekend ideas"
+      ],
+      "available": true,
+      "fallbackBaseModelId": "qwen3_5-2b-q4km"
+    },
+    {
+      "id": "general-pro",
+      "interest": "general",
+      "name": "General",
+      "tier": "Pro",
+      "sizeLabel": "5B",
+      "blurb": "Deeper reasoning and longer explanations.",
+      "color": "#F5B04C",
+      "baseModelId": "gemma4-e4b-q4km",
+      "systemPrompt": "You are Medha General, a helpful everyday assistant. Answer clearly and briefly, ask a short question when the request is unclear, and say so when you are not sure.",
+      "sampling": {
+        "temperature": 1.0,
+        "topP": 0.95,
+        "topK": 64
+      },
+      "thinking": {
+        "enabled": false
+      },
+      "contextTokens": 4096,
+      "maxNewTokens": 768,
+      "prompts": [
+        "Plan a 3-day study timetable",
+        "Summarize the water cycle",
+        "Give me 3 weekend ideas"
+      ],
+      "available": true
+    },
+    {
+      "id": "writing-lite",
+      "interest": "writing",
+      "name": "Writing",
+      "tier": "Lite",
+      "sizeLabel": "2B",
+      "blurb": "Emails, resumes, letters and posts",
+      "color": "#E0E4EC",
+      "baseModelId": "gemma4-e2b-q4km",
+      "systemPrompt": "You are Medha Writing. Draft and improve emails, resumes, letters and posts. Match the tone the user asks for, keep it concise, and use [placeholders] for details you don't know.",
+      "sampling": {
+        "temperature": 1.0,
+        "topP": 0.95,
+        "topK": 64
+      },
+      "thinking": {
+        "enabled": false
+      },
+      "contextTokens": 4096,
+      "maxNewTokens": 768,
+      "prompts": [
+        "Write a polite leave email",
+        "Improve my resume summary",
+        "Draft a thank-you note to a teacher"
+      ],
+      "available": true,
+      "fallbackBaseModelId": "qwen3_5-2b-q4km"
+    },
+    {
+      "id": "writing-pro",
+      "interest": "writing",
+      "name": "Writing",
+      "tier": "Pro",
+      "sizeLabel": "5B",
+      "blurb": "Deeper reasoning and longer explanations.",
+      "color": "#E0E4EC",
+      "baseModelId": "gemma4-e4b-q4km",
+      "systemPrompt": "You are Medha Writing. Draft and improve emails, resumes, letters and posts. Match the tone the user asks for, keep it concise, and use [placeholders] for details you don't know.",
+      "sampling": {
+        "temperature": 1.0,
+        "topP": 0.95,
+        "topK": 64
+      },
+      "thinking": {
+        "enabled": false
+      },
+      "contextTokens": 4096,
+      "maxNewTokens": 768,
+      "prompts": [
+        "Write a polite leave email",
+        "Improve my resume summary",
+        "Draft a thank-you note to a teacher"
+      ],
+      "available": true
+    },
+    {
+      "id": "english-lite",
+      "interest": "english",
+      "name": "Spoken English",
+      "tier": "Lite",
+      "sizeLabel": "2B",
+      "blurb": "Practise speaking with gentle grammar fixes",
+      "color": "#FF9F7A",
+      "baseModelId": "gemma4-e2b-q4km",
+      "systemPrompt": "You are Medha Spoken English, a friendly conversation partner. Keep replies short and natural so they work well when spoken aloud. When the user makes a mistake, show the corrected sentence first, explain it in one line, then continue the conversation.",
+      "sampling": {
+        "temperature": 1.0,
+        "topP": 0.95,
+        "topK": 64
+      },
+      "thinking": {
+        "enabled": false
+      },
+      "contextTokens": 4096,
+      "maxNewTokens": 768,
+      "prompts": [
+        "Correct my sentence: \"He don't like tea\"",
+        "Practise a job interview with me",
+        "Teach me 3 polite phrases"
+      ],
+      "available": true,
+      "tag": "Best with voice",
+      "fallbackBaseModelId": "qwen3_5-2b-q4km"
+    },
+    {
+      "id": "english-pro",
+      "interest": "english",
+      "name": "Spoken English",
+      "tier": "Pro",
+      "sizeLabel": "5B",
+      "blurb": "Deeper reasoning and longer explanations.",
+      "color": "#FF9F7A",
+      "baseModelId": "gemma4-e4b-q4km",
+      "systemPrompt": "You are Medha Spoken English, a friendly conversation partner. Keep replies short and natural so they work well when spoken aloud. When the user makes a mistake, show the corrected sentence first, explain it in one line, then continue the conversation.",
+      "sampling": {
+        "temperature": 1.0,
+        "topP": 0.95,
+        "topK": 64
+      },
+      "thinking": {
+        "enabled": false
+      },
+      "contextTokens": 4096,
+      "maxNewTokens": 768,
+      "prompts": [
+        "Correct my sentence: \"He don't like tea\"",
+        "Practise a job interview with me",
+        "Teach me 3 polite phrases"
+      ],
+      "available": true,
+      "tag": "Best with voice"
+    },
+    {
+      "id": "farming-lite",
+      "interest": "farming",
+      "name": "Farming",
+      "tier": "Lite",
+      "sizeLabel": "2B",
+      "blurb": "Crops, pests, soil and seasons",
+      "color": "#8BD45E",
+      "baseModelId": "gemma4-e2b-q4km",
+      "systemPrompt": "You are Medha Farming, a practical guide for small farmers and gardeners in India. Give clear advice on crops, soil, water, pests and seasons. Always tell people to follow pesticide labels and wear protective gear, and suggest the local Krishi Vigyan Kendra for region-specific advice.",
+      "sampling": {
+        "temperature": 1.0,
+        "topP": 0.95,
+        "topK": 64
+      },
+      "thinking": {
+        "enabled": false
+      },
+      "contextTokens": 4096,
+      "maxNewTokens": 768,
+      "prompts": [
+        "When should I sow tomato seedlings?",
+        "Natural ways to control aphids",
+        "How do I test my soil at home?"
+      ],
+      "available": true,
+      "fallbackBaseModelId": "qwen3_5-2b-q4km"
+    },
+    {
+      "id": "farming-pro",
+      "interest": "farming",
+      "name": "Farming",
+      "tier": "Pro",
+      "sizeLabel": "5B",
+      "blurb": "Deeper reasoning and longer explanations.",
+      "color": "#8BD45E",
+      "baseModelId": "gemma4-e4b-q4km",
+      "systemPrompt": "You are Medha Farming, a practical guide for small farmers and gardeners in India. Give clear advice on crops, soil, water, pests and seasons. Always tell people to follow pesticide labels and wear protective gear, and suggest the local Krishi Vigyan Kendra for region-specific advice.",
+      "sampling": {
+        "temperature": 1.0,
+        "topP": 0.95,
+        "topK": 64
+      },
+      "thinking": {
+        "enabled": false
+      },
+      "contextTokens": 4096,
+      "maxNewTokens": 768,
+      "prompts": [
+        "When should I sow tomato seedlings?",
+        "Natural ways to control aphids",
+        "How do I test my soil at home?"
+      ],
+      "available": true
+    },
+    {
+      "id": "translate-lite",
+      "interest": "translate",
+      "name": "Translate",
+      "tier": "Lite",
+      "sizeLabel": "200M",
+      "blurb": "English ↔ 22 Indian languages, offline",
+      "color": "#FF8FB1",
+      "baseModelId": "qwen3_5-2b-q4km",
+      "systemPrompt": "You are Medha Translate.",
+      "tag": "Coming soon",
+      "available": false
+    }
   ],
   "safety": {
     "guardModelId": "qwen3guard-gen-0_6b-q4km",
@@ -110,23 +652,62 @@
     "crisisTitle": "You don't have to go through this alone",
     "crisisBody": "If you're thinking about harming yourself, please talk to someone now. These services are free and confidential.",
     "crisisResources": [
-      { "label": "Tele-MANAS", "number": "14416", "description": "Free mental health support, 24×7, in many Indian languages" },
-      { "label": "Emergency", "number": "112", "description": "If you are in immediate danger" }
+      {
+        "label": "Tele-MANAS",
+        "number": "14416",
+        "description": "Free mental health support, 24×7, in many Indian languages"
+      },
+      {
+        "label": "Emergency",
+        "number": "112",
+        "description": "If you are in immediate danger"
+      }
     ],
     "phrases": {
       "crisis": [
-        "kill myself", "end my life", "want to die", "suicide", "suicidal", "hurt myself", "harm myself",
-        "no reason to live", "better off dead", "मरना चाहता", "मरना चाहती", "आत्महत्या", "खुद को खत्म", "marna chahta", "marna chahti", "khudkushi"
+        "kill myself",
+        "end my life",
+        "want to die",
+        "suicide",
+        "suicidal",
+        "hurt myself",
+        "harm myself",
+        "no reason to live",
+        "better off dead",
+        "मरना चाहता",
+        "मरना चाहती",
+        "आत्महत्या",
+        "खुद को खत्म",
+        "marna chahta",
+        "marna chahti",
+        "khudkushi"
       ],
       "explosives": [
-        "make a bomb", "build a bomb", "how to make bomb", "pipe bomb", "explosive device", "make explosives", "bomb kaise banaye", "बम कैसे बनाए", "बम बनाने"
+        "make a bomb",
+        "build a bomb",
+        "how to make bomb",
+        "pipe bomb",
+        "explosive device",
+        "make explosives",
+        "bomb kaise banaye",
+        "बम कैसे बनाए",
+        "बम बनाने"
       ],
       "weapons": [
-        "make a gun", "3d print a gun", "build a gun", "untraceable gun", "make a silencer"
+        "make a gun",
+        "3d print a gun",
+        "build a gun",
+        "untraceable gun",
+        "make a silencer"
       ],
       "drugs": [
-        "cook meth", "make meth", "synthesize meth", "make cocaine", "make heroin"
+        "cook meth",
+        "make meth",
+        "synthesize meth",
+        "make cocaine",
+        "make heroin"
       ]
     }
-  }
+  },
+  "embeddingModelId": "qwen3-embedding-0_6b-q8"
 }

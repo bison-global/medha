@@ -40,6 +40,9 @@ class ChatMessage {
     required this.status,
     required this.createdAt,
     this.reasoning = '',
+    this.sources = const [],
+    this.voice = false,
+    this.documentId,
   });
 
   factory ChatMessage.create({
@@ -48,6 +51,8 @@ class ChatMessage {
     required String content,
     MessageKind kind = MessageKind.text,
     MessageStatus status = MessageStatus.done,
+    bool voice = false,
+    String? documentId,
     DateTime? at,
   }) =>
       ChatMessage(
@@ -58,6 +63,8 @@ class ChatMessage {
         content: content,
         status: status,
         createdAt: at ?? DateTime.now(),
+        voice: voice,
+        documentId: documentId,
       );
 
   final String id;
@@ -69,10 +76,20 @@ class ChatMessage {
   final MessageStatus status;
   final DateTime createdAt;
 
+  /// File names the answer drew on (shown as citations).
+  final List<String> sources;
+
+  /// The user spoke this message in voice mode.
+  final bool voice;
+
+  /// The file attached to this message, if any.
+  final String? documentId;
+
   /// Only normal text turns are sent back to the model as history.
   bool get isConversational => kind == MessageKind.text && status != MessageStatus.error && content.isNotEmpty;
 
-  ChatMessage copyWith({String? content, String? reasoning, MessageStatus? status, MessageKind? kind}) => ChatMessage(
+  ChatMessage copyWith({String? content, String? reasoning, MessageStatus? status, MessageKind? kind, List<String>? sources}) =>
+      ChatMessage(
         id: id,
         chatId: chatId,
         role: role,
@@ -81,20 +98,42 @@ class ChatMessage {
         reasoning: reasoning ?? this.reasoning,
         status: status ?? this.status,
         createdAt: createdAt,
+        sources: sources ?? this.sources,
+        voice: voice,
+        documentId: documentId,
       );
 }
 
 class ChatSummary {
-  const ChatSummary({required this.id, required this.title, required this.entryId, required this.createdAt, required this.updatedAt});
+  const ChatSummary({
+    required this.id,
+    required this.title,
+    required this.entryId,
+    required this.createdAt,
+    required this.updatedAt,
+    this.projectId,
+    this.ephemeral = false,
+  });
 
   final String id;
   final String title;
   final String entryId;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? projectId;
 
-  ChatSummary copyWith({String? title, DateTime? updatedAt}) =>
-      ChatSummary(id: id, title: title ?? this.title, entryId: entryId, createdAt: createdAt, updatedAt: updatedAt ?? this.updatedAt);
+  /// Created while "Save chat history" was off; erased at the next start.
+  final bool ephemeral;
+
+  ChatSummary copyWith({String? title, DateTime? updatedAt}) => ChatSummary(
+        id: id,
+        title: title ?? this.title,
+        entryId: entryId,
+        createdAt: createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+        projectId: projectId,
+        ephemeral: ephemeral,
+      );
 }
 
 class InstalledModel {
@@ -104,6 +143,113 @@ class InstalledModel {
   final int bytes;
   final String sha256;
   final DateTime installedAt;
+}
+
+class Project {
+  const Project({required this.id, required this.name, required this.color, required this.createdAt, required this.updatedAt});
+  final String id;
+  final String name;
+  final int color;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+}
+
+enum DocumentStatus {
+  indexing,
+  ready,
+
+  /// No readable text, e.g. a scanned PDF.
+  noText,
+  failed;
+
+  static DocumentStatus parse(String s) => DocumentStatus.values.firstWhere((k) => k.name == s, orElse: () => DocumentStatus.failed);
+}
+
+/// An uploaded file: a project file ([projectId] set) or a chat attachment
+/// ([chatId] set).
+class DocumentRecord {
+  const DocumentRecord({
+    required this.id,
+    required this.name,
+    required this.ext,
+    required this.bytes,
+    required this.path,
+    required this.status,
+    required this.createdAt,
+    this.projectId,
+    this.chatId,
+    this.truncated = false,
+  });
+
+  final String id;
+  final String? projectId;
+  final String? chatId;
+  final String name;
+  final String ext;
+  final int bytes;
+  final String path;
+  final DocumentStatus status;
+  final bool truncated;
+  final DateTime createdAt;
+}
+
+/// A searchable piece of a document.
+class ChunkRecord {
+  const ChunkRecord({
+    required this.id,
+    required this.documentId,
+    required this.documentName,
+    required this.ordinal,
+    required this.text,
+    this.embedding,
+    this.scale = 0,
+    this.model = '',
+  });
+
+  final int id;
+  final String documentId;
+  final String documentName;
+  final int ordinal;
+  final String text;
+
+  /// int8 vector (L2-normalised before quantising), or null if not embedded.
+  final List<int>? embedding;
+  final double scale;
+  final String model;
+}
+
+class ReportRecord {
+  const ReportRecord({
+    required this.id,
+    required this.createdAt,
+    required this.reason,
+    required this.note,
+    this.question,
+    this.reply,
+    this.entryId,
+    this.sentAt,
+  });
+
+  final String id;
+  final DateTime createdAt;
+  final String reason;
+  final String note;
+
+  /// Included only when the user left "Include my question and this reply" on.
+  final String? question;
+  final String? reply;
+  final String? entryId;
+  final DateTime? sentAt;
+
+  Map<String, Object?> toJson() => {
+        'id': id,
+        'createdAt': createdAt.toUtc().toIso8601String(),
+        'reason': reason,
+        'note': note,
+        if (question != null) 'question': question,
+        if (reply != null) 'reply': reply,
+        if (entryId != null) 'subject': entryId,
+      };
 }
 
 String newId() => randomHex(16);

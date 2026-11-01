@@ -24,6 +24,10 @@ typedef _NextDart = int Function(Pointer<Void>, Pointer<Uint8>, int);
 typedef _IntOfCtxNative = Int32 Function(Pointer<Void>);
 typedef _IntOfCtxDart = int Function(Pointer<Void>);
 typedef _ErrorNative = Pointer<Utf8> Function();
+typedef _LoraNative = Int32 Function(Pointer<Void>, Pointer<Utf8>, Float);
+typedef _LoraDart = int Function(Pointer<Void>, Pointer<Utf8>, double);
+typedef _EmbedNative = Int32 Function(Pointer<Void>, Pointer<Utf8>, Pointer<Float>, Int32);
+typedef _EmbedDart = int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Float>, int);
 
 DynamicLibrary _open() {
   if (Platform.isIOS || Platform.isMacOS) return DynamicLibrary.process();
@@ -53,6 +57,10 @@ class MedhaLlama {
   static final _next = _lib.lookupFunction<_NextNative, _NextDart>('medha_next');
   static final _promptTokens = _lib.lookupFunction<_IntOfCtxNative, _IntOfCtxDart>('medha_prompt_tokens');
   static final _lastError = _lib.lookupFunction<_ErrorNative, _ErrorNative>('medha_last_error');
+  static final _loadEmbedder = _lib.lookupFunction<_LoadNative, _LoadDart>('medha_load_embedder');
+  static final _embeddingSize = _lib.lookupFunction<_IntOfCtxNative, _IntOfCtxDart>('medha_embedding_size');
+  static final _embed = _lib.lookupFunction<_EmbedNative, _EmbedDart>('medha_embed');
+  static final _setLora = _lib.lookupFunction<_LoraNative, _LoraDart>('medha_set_lora');
 
   static const int _pieceBufferSize = 256;
 
@@ -70,6 +78,46 @@ class MedhaLlama {
       return MedhaLlama._(ctx);
     } finally {
       calloc.free(p);
+    }
+  }
+
+  /// Loads an embedding model (used for document search).
+  static MedhaLlama loadEmbedder(String path, {int contextTokens = 1024, int threads = 4, int gpuLayers = 0}) {
+    final p = path.toNativeUtf8();
+    try {
+      final ctx = _loadEmbedder(p, contextTokens, threads, gpuLayers);
+      if (ctx == nullptr) throw MedhaLlamaException(lastError());
+      return MedhaLlama._(ctx);
+    } finally {
+      calloc.free(p);
+    }
+  }
+
+  /// Embeds [text]; only for models opened with [loadEmbedder].
+  List<double> embed(String text) {
+    _ensureOpen();
+    final dim = _embeddingSize(_ctx);
+    final out = calloc<Float>(dim);
+    final t = text.toNativeUtf8();
+    try {
+      final n = _embed(_ctx, t, out, dim);
+      if (n < 0) throw MedhaLlamaException(lastError(), n);
+      return List<double>.of(out.asTypedList(n));
+    } finally {
+      calloc.free(out);
+      calloc.free(t);
+    }
+  }
+
+  /// Applies a LoRA subject add-on, or removes it when [path] is null.
+  void setLora(String? path, {double scale = 1.0}) {
+    _ensureOpen();
+    final p = path == null ? nullptr : path.toNativeUtf8();
+    try {
+      final rc = _setLora(_ctx, p, scale);
+      if (rc != 0) throw MedhaLlamaException(lastError(), rc);
+    } finally {
+      if (p != nullptr) calloc.free(p);
     }
   }
 

@@ -1,24 +1,59 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/common/widgets.dart';
+import 'providers.dart';
 import 'router.dart';
 import 'theme.dart';
 
-class MedhaApp extends StatefulWidget {
+class MedhaApp extends ConsumerStatefulWidget {
   const MedhaApp({super.key, required this.initialLocation});
   final String initialLocation;
 
   @override
-  State<MedhaApp> createState() => _MedhaAppState();
+  ConsumerState<MedhaApp> createState() => _MedhaAppState();
 }
 
-class _MedhaAppState extends State<MedhaApp> {
-  late final GoRouter _router = buildRouter(initialLocation: widget.initialLocation);
+class _MedhaAppState extends ConsumerState<MedhaApp> with WidgetsBindingObserver {
+  late final GoRouter _router = buildRouter(initialLocation: widget.initialLocation, lock: ref.read(appLockProvider));
+  bool _covered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    unawaited(ref.read(servicesProvider).reports.flush());
+  }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _router.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final lock = ref.read(appLockProvider);
+    final services = ref.read(servicesProvider);
+    switch (state) {
+      case AppLifecycleState.resumed:
+        lock.onForeground();
+        unawaited(services.reports.flush());
+        setState(() => _covered = false);
+      case AppLifecycleState.inactive:
+        // Hide chats from the app switcher snapshot.
+        if (lock.enabled) setState(() => _covered = true);
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+        lock.onBackground();
+        if (lock.enabled) setState(() => _covered = true);
+      case AppLifecycleState.detached:
+        break;
+    }
   }
 
   @override
@@ -29,6 +64,13 @@ class _MedhaAppState extends State<MedhaApp> {
         darkTheme: buildMedhaTheme(),
         themeMode: ThemeMode.dark,
         routerConfig: _router,
+        builder: (context, child) => Stack(children: [
+          if (child != null) child,
+          if (_covered)
+            const Positioned.fill(
+              child: ColoredBox(color: MedhaColors.ink, child: Center(child: MedhaLogo(size: 72))),
+            ),
+        ]),
       );
 }
 

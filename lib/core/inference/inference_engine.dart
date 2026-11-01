@@ -33,6 +33,8 @@ class ModelHandle {
     required this.promptTemplate,
     this.threads = 4,
     this.gpuLayers = 0,
+    this.adapterPath,
+    this.adapterScale = 1.0,
   });
 
   final String id;
@@ -41,6 +43,10 @@ class ModelHandle {
   final String promptTemplate;
   final int threads;
   final int gpuLayers;
+
+  /// LoRA subject add-on to apply on top of the model, if any.
+  final String? adapterPath;
+  final double adapterScale;
 }
 
 /// Runs one model. Implementations must never block the UI isolate.
@@ -62,5 +68,13 @@ abstract interface class InferenceEngine {
 
   Future<void> cancel();
 
+  Future<void> unload();
+}
+
+/// Turns text into vectors for document search.
+abstract interface class EmbeddingEngine {
+  bool get isLoaded;
+  Future<void> load(String path);
+  Future<List<double>> embed(String text);
   Future<void> unload();
 }

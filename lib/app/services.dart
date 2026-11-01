@@ -7,14 +7,18 @@ import 'package:path_provider/path_provider.dart';
 
 import '../core/catalog/catalog.dart';
 import '../core/catalog/catalog_service.dart';
+import '../core/documents/document_index.dart';
 import '../core/download/model_downloader.dart';
 import '../core/download/model_installer.dart';
 import '../core/inference/engine_manager.dart';
 import '../core/inference/fake_engine.dart';
 import '../core/inference/inference_engine.dart';
 import '../core/inference/llama_engine.dart';
+import '../core/reports/report_service.dart';
 import '../core/safety/guard_classifier.dart';
 import '../core/safety/safety_service.dart';
+import '../core/security/app_lock.dart';
+import '../core/settings/prefs.dart';
 import '../core/storage/database.dart';
 import '../core/storage/repositories.dart';
 import '../core/storage/secure_keys.dart';
@@ -29,7 +33,12 @@ abstract final class BuildFlags {
 
   /// Where to fetch catalog updates from (empty = bundled catalog only).
   static const catalogUrl = String.fromEnvironment('MEDHA_CATALOG_URL');
+
+  /// Where "Report this reply" sends reports (empty = keep them queued).
+  static const reportUrl = String.fromEnvironment('MEDHA_REPORT_URL');
 }
+
+const appVersion = '1.0.0';
 
 /// Everything the app needs, created once at startup.
 class AppServices {
@@ -37,6 +46,12 @@ class AppServices {
     required this.catalog,
     required this.chatRepository,
     required this.modelRepository,
+    required this.projects,
+    required this.documents,
+    required this.documentIndex,
+    required this.settings,
+    required this.appLock,
+    required this.reports,
     required this.engines,
     required this.installer,
     required this.safety,
@@ -46,6 +61,12 @@ class AppServices {
   final Catalog catalog;
   final ChatRepository chatRepository;
   final ModelRepository modelRepository;
+  final ProjectRepository projects;
+  final DocumentRepository documents;
+  final DocumentIndex documentIndex;
+  final AppSettings settings;
+  final AppLock appLock;
+  final ReportService reports;
   final ChatEngines engines;
   final Installer installer;
   final SafetyService safety;
@@ -62,26 +83,19 @@ class AppServices {
     );
     final catalog = await catalogService.load();
 
-    final ChatRepository chats;
-    final ModelRepository models;
-    if (demo) {
-      chats = InMemoryChatRepository();
-      models = InMemoryModelRepository();
-    } else {
-      final db = AppDatabase.open(p.join(support.path, 'medha.db'), keyHex: await SecureKeys().databaseKey());
-      chats = SqliteChatRepository(db);
-      models = SqliteModelRepository(db);
-    }
+    // Demo mode keeps everything in memory, so each launch starts fresh.
+    final db = demo
+        ? AppDatabase.inMemory()
+        : AppDatabase.open(p.join(support.path, 'medha.db'), keyHex: await SecureKeys().databaseKey());
+    final chats = SqliteChatRepository(db);
+    final models = SqliteModelRepository(db);
+    final settingsRepo = SettingsRepository(db);
+    final documents = DocumentRepository(db);
+    await chats.purgeEphemeral();
 
     final modelsDir = Directory(p.join(support.path, 'models'));
     String modelPath(BaseModel m) => p.join(modelsDir.path, m.fileName);
-
-    final ChatEngines engines = EngineManager(
-      catalog: catalog,
-      modelPath: modelPath,
-      chat: demo ? FakeInferenceEngine() : LlamaEngine(debugName: 'medha-chat'),
-      guard: demo ? FakeInferenceEngine(delay: Duration.zero) : LlamaEngine(debugName: 'medha-guard'),
-    );
+    String adapterPath(AdapterFile a) => p.join(modelsDir.path, a.fileName);
 
     final Installer installer = demo
         ? DemoInstaller(catalog: catalog, repository: models)
@@ -107,15 +121,48 @@ class AppServices {
             },
           );
 
+    final EmbeddingEngine embedder = demo ? FakeEmbeddingEngine() : LlamaEmbeddingEngine();
+    final engines = EngineManager(
+      catalog: catalog,
+      modelPath: modelPath,
+      adapterPath: adapterPath,
+      baseFor: (entry) async => (await models.installedEntryBases())[entry.id] ?? entry.baseModelId,
+      isInstalled: (m) async => demo ? installer.embedderInstalled() : (await models.installedModels()).containsKey(m.id),
+      chat: demo ? FakeInferenceEngine() : LlamaEngine(debugName: 'medha-chat'),
+      guard: demo ? FakeInferenceEngine(delay: Duration.zero) : LlamaEngine(debugName: 'medha-guard'),
+      embedder: embedder,
+    );
+
+    final index = DocumentIndex(
+      documents: documents,
+      directory: Directory(p.join(support.path, 'documents')),
+      embeddingModelId: catalog.embeddingModelId,
+      embed: (text) async {
+        if (!await engines.ensureEmbedder()) return null;
+        return engines.embedder.embed(text);
+      },
+    );
+
     final safety = SafetyService(
       config: catalog.safety,
       guard: ModelGuardClassifier(engine: engines.guard, config: catalog.safety),
+    );
+
+    final reports = ReportService(
+      repository: ReportRepository(db),
+      endpoint: BuildFlags.reportUrl.isEmpty ? null : Uri.parse(BuildFlags.reportUrl),
     );
 
     return AppServices(
       catalog: catalog,
       chatRepository: chats,
       modelRepository: models,
+      projects: ProjectRepository(db),
+      documents: documents,
+      documentIndex: index,
+      settings: AppSettings(settingsRepo),
+      appLock: AppLock(prefs: settingsRepo, secrets: SecureSecretStore(), biometrics: LocalBiometricAuth()),
+      reports: reports,
       engines: engines,
       installer: installer,
       safety: safety,

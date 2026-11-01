@@ -55,6 +55,6 @@ jobs:
       - run: cmake --build build/native --target medha_llama
       - name: Check exported symbols
         run: |
-          for s in medha_load medha_free medha_format_chat medha_begin medha_next medha_prompt_tokens medha_last_error; do
+          for s in medha_load medha_free medha_format_chat medha_begin medha_next medha_prompt_tokens medha_last_error medha_load_embedder medha_embed medha_embedding_size medha_set_lora; do
             nm -D --defined-only build/native/libmedha_llama.so | grep -q " $s$" || { echo "missing $s"; exit 1; }
           done

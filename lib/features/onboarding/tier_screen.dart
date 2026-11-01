@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../core/catalog/catalog.dart';
+import '../../core/download/model_installer.dart';
 import '../common/widgets.dart';
 
 /// Step 2: pick Lite or Pro, see what will be downloaded, choose Wi-Fi only.
@@ -18,8 +19,9 @@ class TierScreen extends ConsumerStatefulWidget {
 
 class _TierScreenState extends ConsumerState<TierScreen> {
   String? _selected;
-  bool _wifiOnly = true;
+  bool? _wifiOnly;
   final Map<String, Future<int>> _sizes = {};
+  final Map<String, Future<TierPlan>> _plans = {};
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +36,9 @@ class _TierScreenState extends ConsumerState<TierScreen> {
 
     for (final t in tiers) {
       _sizes.putIfAbsent(t.id, () => services.installer.downloadBytes(t));
+      _plans.putIfAbsent(t.id, () => services.installer.plan(t));
     }
+    final wifiOnly = _wifiOnly ?? services.settings.wifiOnly;
 
     return Scaffold(
       appBar: AppBar(actions: const [
@@ -51,18 +55,32 @@ class _TierScreenState extends ConsumerState<TierScreen> {
                   style: TextStyle(fontSize: 15, height: 1.5, color: MedhaColors.muted)),
               const SizedBox(height: 20),
               for (final t in tiers) ...[
-                _TierCard(
-                  entry: t,
-                  baseName: catalog.baseModel(t.baseModelId).name,
-                  size: _sizes[t.id]!,
-                  selected: t.id == _selected,
-                  onTap: t.available ? () => setState(() => _selected = t.id) : null,
+                FutureBuilder<TierPlan>(
+                  future: _plans[t.id],
+                  builder: (context, plan) {
+                    final p = plan.data;
+                    final fits = p == null || p.fit != TierFit.tooBig;
+                    return _TierCard(
+                      entry: t,
+                      baseName: catalog.baseModel(p?.baseModelId ?? t.baseModelId).name,
+                      size: _sizes[t.id]!,
+                      selected: t.id == _selected,
+                      note: p == null
+                          ? null
+                          : switch (p.fit) {
+                              TierFit.fits => null,
+                              TierFit.fallback => 'Uses a smaller model on this phone to fit its memory',
+                              TierFit.tooBig => 'Needs more memory than this phone has',
+                            },
+                      onTap: t.available && fits ? () => setState(() => _selected = t.id) : null,
+                    );
+                  },
                 ),
                 const SizedBox(height: 12),
               ],
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                value: _wifiOnly,
+                value: wifiOnly,
                 onChanged: (v) => setState(() => _wifiOnly = v),
                 title: const Text('Download on Wi-Fi only'),
               ),
@@ -81,7 +99,7 @@ class _TierScreenState extends ConsumerState<TierScreen> {
                         : 'Download ${selected.sizeLabel} · ${formatBytes(bytes)}';
                 return FilledButton.icon(
                   onPressed: selected.available && bytes != null
-                      ? () => context.push('/install/${selected.id}?wifi=${_wifiOnly ? 1 : 0}')
+                      ? () => context.push('/install/${selected.id}?wifi=${wifiOnly ? 1 : 0}')
                       : null,
                   icon: const Icon(Icons.download_rounded),
                   label: Text(label),
@@ -96,8 +114,9 @@ class _TierScreenState extends ConsumerState<TierScreen> {
 }
 
 class _TierCard extends StatelessWidget {
-  const _TierCard({required this.entry, required this.baseName, required this.size, required this.selected, required this.onTap});
+  const _TierCard({required this.entry, required this.baseName, required this.size, required this.selected, required this.onTap, this.note});
   final InterestEntry entry;
+  final String? note;
   final String baseName;
   final Future<int> size;
   final bool selected;
@@ -135,6 +154,11 @@ class _TierCard extends StatelessWidget {
                     return Text('Runs on $baseName$shared', style: const TextStyle(fontSize: 12, color: MedhaColors.muted));
                   },
                 ),
+                if (note != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(note!, style: const TextStyle(fontSize: 12, color: MedhaColors.accent)),
+                  ),
               ]),
             ),
           ),

@@ -4,34 +4,15 @@ Offline, on-device AI chat. Pick a subject, download a small open model once, an
 
 This repository is the Flutter app. The design is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-**Status: M1 (core chat).**
-- Onboarding: welcome, subject picker, size picker, download.
-- Math Lite (MiniCPM5-2B), with the other subjects shown as "Coming soon".
-- Model download, SHA-256 verification and a test load before first use.
-- Streaming chat with a Stop button and reasoning shown under "Show steps".
-- Chat history in an encrypted database, with delete + undo and delete all.
-- Content safety layer (§9.4) and red-team release gates (§11.1).
-- Licences screen and AI disclosure (§9.5).
-
-App lock, projects, document uploads, voice and the remaining subjects come in later milestones (§12).
-
-## Layout
-
-```
-lib/
-  app/            services wiring, router, theme
-  core/
-    catalog/      signed model catalog (models, subjects, safety config)
-    inference/    InferenceEngine, llama.cpp isolate engine, prompt/context building
-    safety/       phrase rules, guard model, safety pipeline, red-team scoring
-    storage/      encrypted SQLite (SQLCipher) and repositories
-    download/     background downloads, checksum verification, installer
-  features/       onboarding, chat, settings screens
-packages/medha_llama/   FFI plugin: C shim over llama.cpp (Android CMake, iOS xcframework)
-native/llama.cpp/       pinned llama.cpp (git submodule)
-tool/                   catalog builder, platform setup, iOS framework build
-integration_test/       on-device red-team run
-```
+**Status: v1.0 feature-complete (M1–M4), not yet tested on devices.**
+- **Subjects:** Math, Science, Coding, Exam Prep, Wellness, General, Writing, Spoken English and Farming, each in Lite (≈2B) and Pro (≈4–5B). Translate is shown as "Coming soon".
+- **Models:** download, SHA-256 check and a test load before first use. Each subject has its own system prompt and optional LoRA add-on. A RAM check picks a smaller fallback model or warns when Pro won't fit.
+- **Chat:** streaming replies with Stop; reasoning shown under "Show steps". History is kept in an encrypted database, with delete + undo and delete all. A "Save chat history" switch keeps chats only until the app closes.
+- **Projects:** group chats and add up to 5 files (PDF, DOCX, TXT, MD; 10 MB total). Files are searched on the phone (keyword + vector search with Qwen3-Embedding-0.6B), and replies list the files they used.
+- **Attachments:** attach one file to a chat (5 MB).
+- **Voice chat:** uses the phone's offline speech recognition and text-to-speech, in English, Hindi, Tamil or Kannada.
+- **App lock:** fingerprint/face or a 4–6 digit PIN, with auto-lock (instant, 1 min, 5 min), a lockout after wrong PINs, and a privacy cover in the app switcher.
+- **Safety and reporting:** content safety layer (§9.4), red-team release gates (§11.1), "Report this reply" (§9.5), licences and AI disclosure.
 
 ## Getting started
 
@@ -55,7 +36,7 @@ flutter run --dart-define=MEDHA_FAKE_ENGINE=true
 
 ### Run with real models
 
-1. **Get the models.** Download the GGUF files (Q4_K_M) for MiniCPM5-2B and Qwen3Guard-Gen-0.6B and host them somewhere the phone can reach.
+1. **Get the models.** Download the GGUF files listed in `assets/catalog/catalog.dev.json` (`baseModels`: the chat models, Qwen3Guard-Gen-0.6B and Qwen3-Embedding-0.6B) and host them somewhere the phone can reach. You only need the models for the subjects you want to test, plus the guard and the embedding model.
 2. **Build a catalog** with their real sizes and checksums. The bundled `assets/catalog/catalog.dev.json` has none, so the installer refuses to download until you do this.
    ```bash
    dart run tool/make_catalog.dart --gen-key --key-out catalog_signing.seed   # once; keep it secret
@@ -69,7 +50,8 @@ flutter run --dart-define=MEDHA_FAKE_ENGINE=true
    ```bash
    flutter run --dart-define=MEDHA_CATALOG_URL=https://your-cdn/catalog.json
    ```
-5. **iOS only:** build the llama.cpp framework once on a Mac:
+5. **Optional:** send "Report this reply" submissions to your server with `--dart-define=MEDHA_REPORT_URL=https://your-api/reports`. Without it, reports stay queued on the phone.
+6. **iOS only:** build the llama.cpp framework once on a Mac:
    ```bash
    ./tool/build_ios_llama.sh
    ```
@@ -105,11 +87,14 @@ Case format, one JSON object per line:
 {"id": "c-001", "category": "crisis", "language": "hi", "technique": "indirect", "expect": "crisis", "turns": ["…", "…"], "forbidden": ["…"]}
 ```
 
-## Known gaps in M1
+## Known gaps
 
-- **Not built on devices yet.** CI runs `flutter analyze`, the unit tests and a Linux compile of the llama.cpp bridge. Android and iOS builds still need to be run on real devices.
+- **Not built on devices yet.** CI runs `flutter analyze`, the unit tests and a Linux compile of the llama.cpp bridge. Android and iOS builds still need to be run on real devices, and the RAM limits in the catalog need checking on real phones.
 - **Guard prompt.** The guard prompt in the dev catalog is written from Qwen3Guard's published format. Before release, replace it with an exact rendering of the model's own chat template.
 - **Fixed chat templates.** Chat templates fall back to ChatML or Gemma when llama.cpp can't apply the model's own template natively. Check each model's output format, including the thinking tags.
-- **No memory check yet.** RAM-based model gating and the low-memory fallback model (§5.3, §10) are not implemented.
-- **Storage library.** Storage uses `sqlite3` + SQLCipher directly instead of drift, so M1 doesn't need code generation. Switching to drift with SQLite3MultipleCiphers (§7) is a follow-up.
+- **No LoRA add-ons yet.** The app can load add-ons, but none are trained, so the catalog has none.
+- **Uploaded files aren't encrypted separately.** Their text and vectors are in the encrypted database, but the copied original file is protected only by the app's private storage. Per-file encryption (§9.2) is a follow-up.
+- **Scanned PDFs.** PDFs with no text layer are marked "No text found"; there is no OCR.
+- **Voice depends on the phone.** Offline recognition needs the phone's offline speech pack for the chosen language. Some phones fall back to online recognition or don't support a language.
+- **Storage library.** Storage uses `sqlite3` + SQLCipher directly instead of drift, so the app doesn't need code generation. Switching to drift with SQLite3MultipleCiphers (§7) is a follow-up.
 - **Bundled fonts.** Sora and Inter aren't bundled yet, so the app uses system fonts for now.

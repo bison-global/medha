@@ -15,9 +15,17 @@ class ContextBuilder {
 
   int estimateTokens(String s) => (s.length / charsPerToken).ceil() + 4;
 
-  String systemPrompt(SafetyConfig safety, InterestEntry entry, {required bool crisis}) {
-    final parts = [safety.systemPromptBlock, entry.systemPrompt, if (crisis) safety.crisisSystemPrompt];
+  String systemPrompt(SafetyConfig safety, InterestEntry entry, {required bool crisis, String reference = ''}) {
+    final parts = [safety.systemPromptBlock, entry.systemPrompt, if (crisis) safety.crisisSystemPrompt, reference];
     return parts.where((p) => p.trim().isNotEmpty).join('\n\n');
+  }
+
+  /// How many characters of document reference fit alongside the system
+  /// prompt and a short conversation, capped at [cap].
+  int referenceBudgetChars(SafetyConfig safety, InterestEntry entry, {required bool crisis, int cap = 6000}) {
+    final budget = entry.contextTokens - entry.maxNewTokens - entry.thinking.maxTokens - reserveTokens;
+    final room = budget - estimateTokens(systemPrompt(safety, entry, crisis: crisis)) - 400;
+    return min(cap, max(0, (room * charsPerToken).floor()));
   }
 
   List<ChatTurn> build({
@@ -25,8 +33,9 @@ class ContextBuilder {
     required InterestEntry entry,
     required List<ChatTurn> history,
     required bool crisis,
+    String reference = '',
   }) {
-    final system = ChatTurn(ChatRole.system, systemPrompt(safety, entry, crisis: crisis));
+    final system = ChatTurn(ChatRole.system, systemPrompt(safety, entry, crisis: crisis, reference: reference));
     final budget = entry.contextTokens - entry.maxNewTokens - entry.thinking.maxTokens - reserveTokens;
     var used = estimateTokens(system.content);
 

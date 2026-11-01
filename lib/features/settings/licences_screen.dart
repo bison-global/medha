@@ -37,7 +37,13 @@ class LicencesScreen extends ConsumerWidget {
               title: m.name,
               licence: m.license,
               maker: m.maker,
-              detail: m.id == catalog.safety.guardModelId ? 'Safety checker for every message and reply' : 'Used for: ${usedFor(m.id)}',
+              detail: m.id == catalog.safety.guardModelId
+                  ? 'Safety checker for every message and reply'
+                  : m.id == catalog.embeddingModelId
+                      ? 'Document search in projects and attachments'
+                      : usedFor(m.id).isEmpty
+                          ? 'Used on phones with less memory'
+                          : 'Used for: ${usedFor(m.id)}',
               onPhone: installed.isNotEmpty && (m.id == catalog.safety.guardModelId ||
                   catalog.interests.any((e) => installed.contains(e.id) && e.baseModelId == m.id)),
               text: [m.licenseText, if (m.notice != null) 'NOTICE\n${m.notice}'].join('\n\n'),
