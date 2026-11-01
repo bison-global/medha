@@ -1,9 +1,7 @@
 import 'package:go_router/go_router.dart';
 
-import '../core/security/app_lock.dart';
 import '../features/chat/chat_list_screen.dart';
 import '../features/chat/chat_screen.dart';
-import '../features/lock/lock_screen.dart';
 import '../features/lock/secure_screen.dart';
 import '../features/models/models_screen.dart';
 import '../features/onboarding/install_screen.dart';
@@ -17,19 +15,12 @@ import '../features/settings/settings_screen.dart';
 import '../features/shell/home_shell.dart';
 import '../features/voice/voice_screen.dart';
 
-/// Routes. While the app is locked every route redirects to /lock, so no
-/// screen renders before unlock (ARCHITECTURE.md §9.1).
-GoRouter buildRouter({required String initialLocation, required AppLock lock}) => GoRouter(
+/// Routes. The app lock is drawn above the router (see MedhaApp), so locking
+/// never rebuilds or removes the screen underneath and a reply in progress
+/// keeps going (ARCHITECTURE.md §9.1).
+GoRouter buildRouter({required String initialLocation}) => GoRouter(
       initialLocation: initialLocation,
-      refreshListenable: lock,
-      redirect: (context, state) {
-        final atLock = state.matchedLocation == '/lock';
-        if (lock.locked && !atLock) return '/lock?from=${Uri.encodeComponent(state.uri.toString())}';
-        if (!lock.locked && atLock) return state.uri.queryParameters['from'] ?? '/chats';
-        return null;
-      },
       routes: [
-        GoRoute(path: '/lock', builder: (_, __) => const LockScreen()),
         GoRoute(path: '/welcome', builder: (_, __) => const WelcomeScreen()),
         GoRoute(
           path: '/subjects',

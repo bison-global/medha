@@ -46,7 +46,8 @@ class _InstallScreenState extends ConsumerState<InstallScreen> {
         if (!lock.enabled && !lock.asked) {
           context.go('/secure?next=${Uri.encodeComponent('/chat/${chat.id}')}');
         } else {
-          context.go('/chat/${chat.id}');
+          context.go('/chats');
+          context.push('/chat/${chat.id}');
         }
       }
     });

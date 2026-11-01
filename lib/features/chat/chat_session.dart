@@ -22,7 +22,7 @@ class ChatSession extends ChangeNotifier {
     required this.engines,
     required this.safety,
     this.contextBuilder = const ContextBuilder(),
-    this.outputCheckEvery = 120,
+    this.outputCheckEvery = 300,
     this.index,
   });
 

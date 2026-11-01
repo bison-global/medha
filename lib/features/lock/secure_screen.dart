@@ -43,7 +43,9 @@ class _SecureScreenState extends ConsumerState<SecureScreen> {
   void _done() {
     final next = widget.next;
     if (next != null) {
-      context.go(next);
+      // Keep the chat list underneath so Back leads somewhere.
+      context.go('/chats');
+      context.push(next);
     } else if (context.canPop()) {
       context.pop();
     } else {

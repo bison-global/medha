@@ -44,7 +44,12 @@ class EngineManager implements ChatEngines {
   final EmbeddingEngine embedder;
 
   /// Leave one performance core free for the UI.
-  static int get defaultThreads => max(1, min(6, Platform.numberOfProcessors - 1));
+  /// Phones mix fast and slow cores; using the slow ones makes every token
+  /// wait for them. Four threads fit the big cores on most 8–10 core phones.
+  static int get defaultThreads {
+    final cores = Platform.numberOfProcessors;
+    return cores >= 8 ? 4 : max(1, cores - 2);
+  }
 
   /// Metal on iOS; CPU on Android until Vulkan is validated per device.
   static int get defaultGpuLayers => Platform.isIOS ? -1 : 0;
