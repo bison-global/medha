@@ -33,7 +33,20 @@ struct medha_ctx {
     bool done;
     struct llama_adapter_lora * lora;
     bool embedder;
+    // Tokens currently held in the KV cache, so the next prompt only has to
+    // read what changed (usually just the newest message).
+    llama_token * cache;
+    int32_t n_cache;
 };
+
+static void cache_reset(medha_ctx * ctx) {
+    llama_memory_clear(llama_get_memory(ctx->lctx), true);
+    ctx->n_cache = 0;
+}
+
+static void cache_push(medha_ctx * ctx, llama_token t) {
+    if (ctx->cache != NULL && ctx->n_cache < ctx->n_ctx) ctx->cache[ctx->n_cache++] = t;
+}
 
 static _Thread_local char g_error[256];
 static bool g_backend_ready = false;
@@ -97,6 +110,10 @@ static medha_ctx * load_ctx(const char * path, int32_t n_ctx, int32_t n_threads,
     ctx->n_batch = (int32_t) cp.n_batch;
     ctx->done = true;
     ctx->embedder = embedder;
+    if (!embedder) {
+        ctx->cache = (llama_token *) malloc(sizeof(llama_token) * (size_t) n_ctx);
+        ctx->n_cache = 0;
+    }
     return ctx;
 }
 
@@ -114,6 +131,7 @@ void medha_free(medha_ctx * ctx) {
     if (ctx->lora != NULL) llama_adapter_lora_free(ctx->lora);
     if (ctx->lctx != NULL) llama_free(ctx->lctx);
     if (ctx->model != NULL) llama_model_free(ctx->model);
+    free(ctx->cache);
     free(ctx);
 }
 
@@ -183,9 +201,6 @@ int32_t medha_begin(
         return MEDHA_ERR_ARGS;
     }
 
-    // Each generation starts from a clean cache; the caller sends the whole
-    // (already truncated) conversation every time.
-    llama_memory_clear(llama_get_memory(ctx->lctx), true);
     ctx->n_used = 0;
     ctx->prompt_tokens = 0;
     ctx->done = false;
@@ -220,14 +235,30 @@ int32_t medha_begin(
         return MEDHA_ERR_TOKENIZE;
     }
 
-    for (int32_t i = 0; i < n; i += ctx->n_batch) {
+    // The caller sends the whole (already truncated) conversation every time.
+    // Keep the part of the KV cache that matches it and read only the rest.
+    int32_t keep = 0;
+    if (ctx->cache != NULL) {
+        while (keep < ctx->n_cache && keep < n && ctx->cache[keep] == tokens[keep]) keep++;
+        if (keep >= n) keep = n - 1;  // the last token must be read again for fresh logits
+        if (keep > 0 && !llama_memory_seq_rm(llama_get_memory(ctx->lctx), 0, keep, -1)) keep = 0;
+    }
+    if (keep == 0) {
+        cache_reset(ctx);
+    } else {
+        ctx->n_cache = keep;
+    }
+
+    for (int32_t i = keep; i < n; i += ctx->n_batch) {
         const int32_t chunk = (n - i) < ctx->n_batch ? (n - i) : ctx->n_batch;
         if (llama_decode(ctx->lctx, llama_batch_get_one(tokens + i, chunk)) != 0) {
             free(tokens);
+            cache_reset(ctx);
             set_error("decode failed while reading the prompt");
             ctx->done = true;
             return MEDHA_ERR_DECODE;
         }
+        for (int32_t j = i; j < i + chunk; j++) cache_push(ctx, tokens[j]);
     }
     free(tokens);
     ctx->n_used = n;
@@ -262,10 +293,12 @@ int32_t medha_next(medha_ctx * ctx, char * buf, int32_t buf_len) {
 
         ctx->last = token;
         if (llama_decode(ctx->lctx, llama_batch_get_one(&ctx->last, 1)) != 0) {
+            cache_reset(ctx);
             set_error("decode failed");
             ctx->done = true;
             return MEDHA_ERR_DECODE;
         }
+        cache_push(ctx, token);
         ctx->n_used += 1;
 
         if (n > 0) return n;
@@ -279,6 +312,8 @@ int32_t medha_prompt_tokens(medha_ctx * ctx) {
 int32_t medha_set_lora(medha_ctx * ctx, const char * path, float scale) {
     g_error[0] = '\0';
     if (ctx == NULL) return MEDHA_ERR_ARGS;
+    ctx->n_cache = 0;  // a different add-on changes every cached value
+    llama_memory_clear(llama_get_memory(ctx->lctx), true);
     if (path == NULL) {
         llama_set_adapters_lora(ctx->lctx, NULL, 0, NULL);
         if (ctx->lora != NULL) {

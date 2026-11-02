@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../app/providers.dart';
 import '../../app/theme.dart';
@@ -13,6 +14,7 @@ import '../common/file_pick.dart';
 import '../common/widgets.dart';
 import 'chat_session.dart';
 import 'report_sheet.dart';
+import 'rich_reply.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key, required this.chatId});
@@ -29,7 +31,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void dispose() {
     _input.dispose();
+    WakelockPlus.disable();
     super.dispose();
+  }
+
+  /// Back from a chat always lands on the chat list, even when the chat was
+  /// opened directly (after a download or unlock).
+  void _back() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/chats');
+    }
   }
 
   void _toast(String text) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
@@ -65,19 +78,30 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     final session = ref.watch(chatSessionProvider(widget.chatId));
     final services = ref.watch(servicesProvider);
+    // Keep the screen on while a reply is being written, so the phone
+    // doesn't sleep in the middle of it.
+    ref.listen(chatSessionProvider(widget.chatId).select((s) => s.busy), (_, busy) {
+      busy ? WakelockPlus.enable() : WakelockPlus.disable();
+    });
     final installed = ref.watch(installedEntriesProvider).valueOrNull;
     final entry = session.entry;
 
     if (session.loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
     if (session.loadError != null || entry == null) {
-      return Scaffold(appBar: AppBar(), body: Center(child: Text(session.loadError ?? 'This subject is no longer available.')));
+      return Scaffold(appBar: AppBar(leading: BackButton(onPressed: _back)), body: Center(child: Text(session.loadError ?? 'This subject is no longer available.')));
     }
     final modelMissing = installed != null && !installed.contains(entry.id);
     final projectId = session.chat?.projectId;
     final messages = session.messages.reversed.toList();
 
-    return Scaffold(
+    return PopScope(
+      canPop: context.canPop(),
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.go('/chats');
+      },
+      child: Scaffold(
       appBar: AppBar(
+        leading: BackButton(onPressed: _back),
         titleSpacing: 0,
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(session.chat?.title ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
@@ -159,6 +183,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             child: Text(aiDisclosure, textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: MedhaColors.faint)),
           ),
         ]),
+      ),
       ),
     );
   }
@@ -315,7 +340,10 @@ class _MessageView extends StatelessWidget {
               if (streaming && m.content.isEmpty && m.reasoning.isEmpty)
                 const Text('Thinking on-device…', style: TextStyle(color: MedhaColors.muted))
               else if (m.content.isNotEmpty)
-                SelectableText(m.content, style: const TextStyle(fontSize: 15, height: 1.5)),
+                if (m.kind == MessageKind.text)
+                  RichReply(m.content)
+                else
+                  SelectableText(m.content, style: const TextStyle(fontSize: 15, height: 1.5)),
               if (m.sources.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),

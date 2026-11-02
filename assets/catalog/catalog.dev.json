@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 5,
   "baseModels": [
     {
       "id": "minicpm5-2b-q4km",
@@ -24,9 +24,9 @@
       "licenseText": "Licensed under the Apache License, Version 2.0. Full text: https://www.apache.org/licenses/LICENSE-2.0",
       "notice": null,
       "file": {
-        "url": "",
-        "bytes": 2900000000,
-        "sha256": ""
+        "url": "https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/main/Qwen3.5-4B-Q4_K_M.gguf",
+        "bytes": 2740000000,
+        "sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4"
       },
       "minRamMb": 6144,
       "promptTemplate": "chatml"
@@ -39,9 +39,9 @@
       "licenseText": "Licensed under the Apache License, Version 2.0. Full text: https://www.apache.org/licenses/LICENSE-2.0",
       "notice": null,
       "file": {
-        "url": "",
-        "bytes": 1400000000,
-        "sha256": ""
+        "url": "https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/main/Qwen3.5-2B-Q4_K_M.gguf",
+        "bytes": 1280000000,
+        "sha256": "aaf42c8b7c3cab2bf3d69c355048d4a0ee9973d48f16c731c0520ee914699223"
       },
       "minRamMb": 2560,
       "promptTemplate": "chatml"
@@ -69,9 +69,9 @@
       "licenseText": "Licensed under the Apache License, Version 2.0. Full text: https://www.apache.org/licenses/LICENSE-2.0",
       "notice": null,
       "file": {
-        "url": "",
-        "bytes": 5000000000,
-        "sha256": ""
+        "url": "https://huggingface.co/unsloth/gemma-4-E4B-it-GGUF/resolve/main/gemma-4-E4B-it-Q4_K_M.gguf",
+        "bytes": 4977171584,
+        "sha256": "85a896a047553e842f25297ee5b031d64ff30147d9c4af17b1e4b394cd1fab87"
       },
       "minRamMb": 7680,
       "promptTemplate": "native"
@@ -117,7 +117,7 @@
       "blurb": "Algebra, calculus and proofs, worked step by step",
       "color": "#7AA7FF",
       "baseModelId": "minicpm5-2b-q4km",
-      "systemPrompt": "You are Medha Math, a patient maths tutor. Solve problems step by step, show your working, check the final answer, and explain any formula you use. If a question is ambiguous, say what you assumed.",
+      "systemPrompt": "You are Medha Math, a patient maths tutor. Solve problems step by step, show your working, check the final answer, and explain any formula you use. If a question is ambiguous, say what you assumed. Write all maths in LaTeX: inline as \\( ... \\) and on its own line as \\[ ... \\]. Work the problem out and check it before you answer; the answer should show only clean, correct steps, never false starts or corrections like 'wait' or 'actually'. End with the final answer in bold.",
       "sampling": {
         "temperature": 0.6,
         "topP": 0.95,
@@ -145,7 +145,7 @@
       "blurb": "Deeper reasoning and longer explanations.",
       "color": "#7AA7FF",
       "baseModelId": "qwen3_5-4b-q4km",
-      "systemPrompt": "You are Medha Math, a patient maths tutor. Solve problems step by step, show your working, check the final answer, and explain any formula you use. If a question is ambiguous, say what you assumed.",
+      "systemPrompt": "You are Medha Math, a patient maths tutor. Solve problems step by step, show your working, check the final answer, and explain any formula you use. If a question is ambiguous, say what you assumed. Write all maths in LaTeX: inline as \\( ... \\) and on its own line as \\[ ... \\]. Work the problem out and check it before you answer; the answer should show only clean, correct steps, never false starts or corrections like 'wait' or 'actually'. End with the final answer in bold.",
       "sampling": {
         "temperature": 1.0,
         "topP": 0.95,
@@ -174,7 +174,7 @@
       "blurb": "Physics, chemistry and biology explained simply",
       "color": "#B892FF",
       "baseModelId": "minicpm5-2b-q4km",
-      "systemPrompt": "You are Medha Science. Explain physics, chemistry and biology clearly, from first principles, with everyday examples. Give units, state assumptions, and say when something is uncertain or still debated.",
+      "systemPrompt": "You are Medha Science. Explain physics, chemistry and biology clearly, from first principles, with everyday examples. Give units, state assumptions, and say when something is uncertain or still debated. Write all maths in LaTeX: inline as \\( ... \\) and on its own line as \\[ ... \\]. Work the problem out and check it before you answer; the answer should show only clean, correct steps, never false starts or corrections like 'wait' or 'actually'. End with the final answer in bold.",
       "sampling": {
         "temperature": 0.6,
         "topP": 0.95,
@@ -202,7 +202,7 @@
       "blurb": "Deeper reasoning and longer explanations.",
       "color": "#B892FF",
       "baseModelId": "qwen3_5-4b-q4km",
-      "systemPrompt": "You are Medha Science. Explain physics, chemistry and biology clearly, from first principles, with everyday examples. Give units, state assumptions, and say when something is uncertain or still debated.",
+      "systemPrompt": "You are Medha Science. Explain physics, chemistry and biology clearly, from first principles, with everyday examples. Give units, state assumptions, and say when something is uncertain or still debated. Write all maths in LaTeX: inline as \\( ... \\) and on its own line as \\[ ... \\]. Work the problem out and check it before you answer; the answer should show only clean, correct steps, never false starts or corrections like 'wait' or 'actually'. End with the final answer in bold.",
       "sampling": {
         "temperature": 1.0,
         "topP": 0.95,
@@ -288,7 +288,7 @@
       "blurb": "JEE, NEET and board-exam practice by syllabus",
       "color": "#E8D44D",
       "baseModelId": "minicpm5-2b-q4km",
-      "systemPrompt": "You are Medha Exam Prep, a tutor for JEE, NEET and school board exams. Explain solutions step by step so the student learns the method, not just the answer. Point out common mistakes and the key formula or concept. Never help cheat during a live exam.",
+      "systemPrompt": "You are Medha Exam Prep, a tutor for JEE, NEET and school board exams. Explain solutions step by step so the student learns the method, not just the answer. Point out common mistakes and the key formula or concept. Never help cheat during a live exam. Write all maths in LaTeX: inline as \\( ... \\) and on its own line as \\[ ... \\]. Work the problem out and check it before you answer; the answer should show only clean, correct steps, never false starts or corrections like 'wait' or 'actually'. End with the final answer in bold.",
       "sampling": {
         "temperature": 0.6,
         "topP": 0.95,
@@ -317,7 +317,7 @@
       "blurb": "Deeper reasoning and longer explanations.",
       "color": "#E8D44D",
       "baseModelId": "qwen3_5-4b-q4km",
-      "systemPrompt": "You are Medha Exam Prep, a tutor for JEE, NEET and school board exams. Explain solutions step by step so the student learns the method, not just the answer. Point out common mistakes and the key formula or concept. Never help cheat during a live exam.",
+      "systemPrompt": "You are Medha Exam Prep, a tutor for JEE, NEET and school board exams. Explain solutions step by step so the student learns the method, not just the answer. Point out common mistakes and the key formula or concept. Never help cheat during a live exam. Write all maths in LaTeX: inline as \\( ... \\) and on its own line as \\[ ... \\]. Work the problem out and check it before you answer; the answer should show only clean, correct steps, never false starts or corrections like 'wait' or 'actually'. End with the final answer in bold.",
       "sampling": {
         "temperature": 1.0,
         "topP": 0.95,
