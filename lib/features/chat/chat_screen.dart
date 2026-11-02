@@ -14,6 +14,7 @@ import '../common/file_pick.dart';
 import '../common/widgets.dart';
 import 'chat_session.dart';
 import 'report_sheet.dart';
+import 'rich_reply.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key, required this.chatId});
@@ -339,7 +340,10 @@ class _MessageView extends StatelessWidget {
               if (streaming && m.content.isEmpty && m.reasoning.isEmpty)
                 const Text('Thinking on-device…', style: TextStyle(color: MedhaColors.muted))
               else if (m.content.isNotEmpty)
-                SelectableText(m.content, style: const TextStyle(fontSize: 15, height: 1.5)),
+                if (m.kind == MessageKind.text)
+                  RichReply(m.content)
+                else
+                  SelectableText(m.content, style: const TextStyle(fontSize: 15, height: 1.5)),
               if (m.sources.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
