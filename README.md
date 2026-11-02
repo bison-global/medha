@@ -36,13 +36,13 @@ flutter run --dart-define=MEDHA_FAKE_ENGINE=true
 
 ### Run with real models
 
-The bundled catalog (`assets/catalog/catalog.dev.json`) already has Hugging Face download links and SHA-256 checksums for the **Lite** models (MiniCPM5-2B, Gemma 4 E2B), the safety model (Qwen3Guard-Gen-0.6B) and the search model (Qwen3-Embedding-0.6B). A debug build with no flags downloads them on the phone:
+The bundled catalog (`assets/catalog/catalog.dev.json`) has Hugging Face download links and SHA-256 checksums for every model: Lite (MiniCPM5-2B, Gemma 4 E2B), Pro (Qwen3.5-4B, Gemma 4 E4B), the low-memory fallback (Qwen3.5-2B), the safety model (Qwen3Guard-Gen-0.6B) and the search model (Qwen3-Embedding-0.6B). A debug build with no flags downloads them on the phone:
 
 ```bash
 flutter run
 ```
 
-**Pro models and the low-memory fallback** (Qwen3.5-4B, Gemma 4 E4B, Qwen3.5-2B) don't have links yet, so picking Pro shows an error. To add them, or to host the models yourself, build a catalog:
+To host the models yourself, or change them, build a catalog:
 
 1. Download the GGUF files to your computer.
 2. Run `make_catalog`, which fills in sizes and checksums:
